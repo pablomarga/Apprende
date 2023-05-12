@@ -1,40 +1,72 @@
-import React, { Component } from "react"
-import { createMaterialBottomTabNavigator } from '@react-navigation/material-bottom-tabs'
+import React, { useEffect } from "react"
+import { createMaterialBottomTabNavigator } from "@react-navigation/material-bottom-tabs"
 import { connect } from "react-redux"
 import { bindActionCreators } from "redux"
 import { fetchUser } from "./redux/actions/index"
-import { MaterialCommunityIcons } from 'react-native-vector-icons/'
-import CourseScreen from './screens/CoursesScreen'
+import { saveTabTitle } from "./redux/actions/tabTitle"
+import { MaterialCommunityIcons } from "react-native-vector-icons/"
+import { CoursesScreen, CalendarScreen } from "./screens"
 
-
-const Tab = createMaterialBottomTabNavigator()
-
-export class Main extends Component {
-  componentDidMount() {
-    this.props.fetchUser()
+const Main = ({ fetchUser, saveTabTitle }) => {
+  useEffect(() => {
+    fetchUser()
+    console.log('useEffect 1')
+  }, [])
+  console.log('Primer log Main 1.5')
+  const Tab = createMaterialBottomTabNavigator()
+  console.log('2')
+  const handleTabPress = title => {
+    saveTabTitle(title)
+    console.log('handleTabPress 3')
   }
-  render() {
-    return (
-      <Tab.Navigator initialRouteName="Course" labeled={false}>
-        <Tab.Screen
-          name="Course"
-          component={CourseScreen}
-          options={{
-            tabBarIcon: ({ color, size }) => (
-              <MaterialCommunityIcons name="school" color={color} size={26} />
-            )
-          }}
-        />
-      
-      </Tab.Navigator>
-    )
-  }
+  console.log('Antes del return 3.5')
+  return (
+    <Tab.Navigator
+      initialRouteName="Course"
+      labeled={false}
+      activeColor="#f0edf6"
+      inactiveColor="#3e2465"
+    >
+      <Tab.Screen
+        name="Course"
+        component={CoursesScreen}
+        listeners={{
+          tabPress: () => {
+            console.log('tabPress 4')
+            handleTabPress("Cursos")
+          },
+        }}
+        options={{
+          tabBarIcon: ({ color, size = 26 }) => (
+            <MaterialCommunityIcons name="school" color={color} size={size} />
+          ),
+        }}
+      />
+      <Tab.Screen
+        name="Calendar"
+        component={CalendarScreen}
+        listeners={{
+          tabPress: () => {
+            console.log('tabPress Calendario 5')
+            handleTabPress("Calendario")
+          },
+        }}
+        options={{
+          tabBarIcon: ({ color, size = 26 }) => (
+            <MaterialCommunityIcons name="calendar" color={color} size={size} />
+          ),
+        }}
+      />
+    </Tab.Navigator>
+  )
 }
 
 const mapStateToProps = store => ({
-  currentUser: store.userState.currentUser
+  currentUser: store.userState.currentUser,
 })
 
-const mapDispatchProps = dispatch => bindActionCreators({ fetchUser }, dispatch)
+const mapDispatchToProps = dispatch => {
+  console.log('mapDispatchToProps 6')
+  return bindActionCreators({ fetchUser, saveTabTitle }, dispatch)}
 
-export default connect(mapStateToProps, mapDispatchProps)(Main)
+export default connect(mapStateToProps, mapDispatchToProps)(Main)

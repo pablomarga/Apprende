@@ -9,56 +9,43 @@ import {
   TouchableOpacity,
   KeyboardAvoidingView,
 } from "react-native"
-import React, { useState, createRef, useEffect } from "react"
+import React, { useState } from "react"
 import { auth } from "../../../firebase"
 import { fetchLogo } from "../util"
 import Loader from "../../Loader"
 
-const LoginScreen = ({ navigation }) => {
+const ForgotPasswordScreen = ({ navigation }) => {
   const [email, setEmail] = useState("")
-  const [password, setPassword] = useState("")
   const [logo, setLogo] = useState("")
   const [loading, setLoading] = useState(false)
   const [errorText, setErrorText] = useState("")
+  const [successText, setSuccessText] = useState("")
 
-  const passwordInputRef = createRef()
-
-  fetchLogo().then(val => {
-    setLogo(val)
-  })
-
-  const onSignUp = () => {
+  const handleForgotPassword = async () => {
     setErrorText("")
+    setSuccessText("")
     if (!email) {
       setErrorText("Por favor introduzca el email")
       return
     }
-    if (!password) {
-      setErrorText("Por favor introduzca la contraseña")
-      return
+    try {
+      setLoading(true)
+      await auth.sendPasswordResetEmail(email)
+      setLoading(false)
+      setSuccessText("Email enviado correctamente")
+    } catch (error) {
+      setLoading(false)
+      setErrorText("No existe un usuario con ese email")
+      console.log(error)
     }
-    auth
-      .signInWithEmailAndPassword(email, password)
-      .then(() => {
-        console.log("VERIFIED", auth.currentUser.emailVerified)
-        !auth.currentUser.emailVerified &&
-          setErrorText("Por favor para continuar verifica el email")
-
-        setLoading(false)
-      })
-      .catch(() => {
-        setLoading(false)
-        setErrorText("Usuario no existe")
-      })
   }
+  fetchLogo().then(val => {
+    setLogo(val)
+  })
 
-  const onNavigateRegister = () => {
+  const onNavigateLogin = () => {
     setErrorText("")
-    navigation.navigate("Register")
-  }
-  const onNavigateForgot = () => {
-    setErrorText("")
-    navigation.navigate("ForgotPassword")
+    navigation.navigate("Login")
   }
 
   return (
@@ -94,45 +81,28 @@ const LoginScreen = ({ navigation }) => {
                 autoCapitalize="none"
                 keyboardType="email-address"
                 returnKeyType="next"
-                onSubmitEditing={() =>
-                  passwordInputRef.current && passwordInputRef.current.focus()
-                }
-                underlineColorAndroid="#f000"
-              />
-            </View>
-            <View style={styles.SectionStyle}>
-              <TextInput
-                style={styles.inputStyle}
-                onChangeText={UserPassword => setPassword(UserPassword)}
-                placeholder="Introduce tu contraseña"
-                placeholderTextColor="#8b9cb5"
-                keyboardType="default"
-                ref={passwordInputRef}
                 onSubmitEditing={Keyboard.dismiss}
-                blurOnSubmit={false}
-                secureTextEntry={true}
                 underlineColorAndroid="#f000"
-                returnKeyType="next"
               />
             </View>
             {errorText != "" ? (
               <Text style={styles.errorTextStyle}> {errorText} </Text>
             ) : null}
+            {successText != "" ? (
+              <Text style={styles.successTextStyle}> {successText} </Text>
+            ) : null}
             <TouchableOpacity
               style={styles.buttonStyle}
               activeOpacity={0.5}
-              onPress={onSignUp}
+              onPress={handleForgotPassword}
             >
-              <Text style={styles.buttonTextStyle}>LOGIN</Text>
+              <Text style={styles.buttonTextStyle}>Enviar enlace</Text>
             </TouchableOpacity>
-            <Text style={styles.registerTextStyle} onPress={() => onNavigateRegister()}>
-              ¿Nuevo aquí? Register
-            </Text>
             <Text
               style={styles.registerTextStyle}
-              onPress={() => onNavigateForgot()}
+              onPress={() => onNavigateLogin()}
             >
-              Reestablecer contraseña
+              Volver al login
             </Text>
           </KeyboardAvoidingView>
         </View>
@@ -141,7 +111,7 @@ const LoginScreen = ({ navigation }) => {
   )
 }
 
-export default LoginScreen
+export default ForgotPasswordScreen
 
 const styles = StyleSheet.create({
   mainBody: {
@@ -198,4 +168,9 @@ const styles = StyleSheet.create({
     textAlign: "center",
     fontSize: 14,
   },
+  successTextStyle: {
+    color: "green",
+    textAlign: "center",
+    fontSize: 14,
+  }
 })

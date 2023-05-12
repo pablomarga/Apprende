@@ -2,15 +2,24 @@ import firebase from "firebase/compat/app"
 import { getStorage, ref } from "firebase/storage"
 import "firebase/compat/auth"
 import "firebase/compat/firestore"
+import {
+  API_KEY,
+  AUTH_DOMAIN,
+  PROJECT_ID,
+  STORAGE_BUCKET,
+  MESSAGING_SENDER_ID,
+  APP_ID,
+  MEASUREMENT_ID,
+} from "@env"
 
 const firebaseConfig = {
-  apiKey: "AIzaSyBmxEV-865DWf97LEJ9fcdZbR2O6Ium0T4",
-  authDomain: "apprende-5aa76.firebaseapp.com",
-  projectId: "apprende-5aa76",
-  storageBucket: "apprende-5aa76.appspot.com",
-  messagingSenderId: "598663169080",
-  appId: "1:598663169080:web:0eac2ca351861e755d52cd",
-  measurementId: "G-3HHTP1GF3Q",
+  apiKey: API_KEY,
+  authDomain: AUTH_DOMAIN,
+  projectId: PROJECT_ID,
+  storageBucket: STORAGE_BUCKET,
+  messagingSenderId: MESSAGING_SENDER_ID,
+  appId: APP_ID,
+  measurementId: MEASUREMENT_ID,
 }
 
 let app

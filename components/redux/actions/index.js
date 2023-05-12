@@ -4,10 +4,6 @@ import {
   CLEAR_DATA,
   SEND_VERIFICATION_EMAIL_SUCCESS,
 } from "../constants"
-import firebase from "firebase/compat/app"
-import { getStorage, ref } from "firebase/storage"
-import "firebase/compat/auth"
-import "firebase/compat/firestore"
 
 let unsubscribe = []
 

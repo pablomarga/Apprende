@@ -2,16 +2,16 @@ import React from "react"
 import { View, Text } from "react-native"
 import { auth } from "../../firebase"
 
-const Courses = () => {
+const Notifications = () => {
   const onLogOut = () => {
     auth.signOut()
   }
   return (
     <View>
-      <Text>Courses</Text>
+      <Text>Notifications</Text>
       <Text onPress={onLogOut}>Log out</Text>
     </View>
   )
 }
 
-export default Courses
+export default Notifications

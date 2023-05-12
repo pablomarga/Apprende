@@ -1,97 +1,163 @@
-// import "react-native-gesture-handler"
-import React, { Component } from "react"
-import { Provider } from "react-redux"
+import "react-native-gesture-handler"
+import React, { useState, useEffect } from "react"
+import { Provider, connect } from "react-redux"
 import { StyleSheet } from "react-native"
-import { NavigationContainer } from "@react-navigation/native"
+import {
+  NavigationContainer,
+  DrawerActions,
+  useNavigation,
+} from "@react-navigation/native"
 import { createStackNavigator } from "@react-navigation/stack"
-import { LoginScreen, RegisterScreen } from "./components/screens/auth"
+import { createDrawerNavigator } from "@react-navigation/drawer"
+import MaterialCommunityIcons from "react-native-vector-icons/MaterialCommunityIcons"
+import { configureStore } from "@reduxjs/toolkit"
+import {
+  LoginScreen,
+  RegisterScreen,
+  ForgotPasswordScreen,
+} from "./components/screens/auth"
 import MainScreen from "./components/Main"
-import { createStore, applyMiddleware } from "redux"
-import rootReducer from "./components/redux/reducers"
-import { composeWithDevTools } from "redux-devtools-extension"
-import thunk from "redux-thunk"
+import {
+  ChangePassword,
+  CalificationsScreen,
+  LogOut,
+} from "./components/screens/User"
 import { auth } from "./firebase"
 import Loader from "./components/Loader"
+import rootReducer from "./components/redux/reducers"
 
-const store = createStore(
-  rootReducer,
-  composeWithDevTools(applyMiddleware(thunk))
-)
+const store = configureStore({ reducer: rootReducer })
+
 const Stack = createStackNavigator()
-export class App extends Component {
-  constructor() {
-    super()
-    this.state = {
-      loggedIn: false,
-      loaded: false,
-    }
+const Drawer = createDrawerNavigator()
+
+const App = ({ title }) => {
+  const [loggedIn, setLoggedIn] = useState(false)
+  const [loaded, setLoaded] = useState(false)
+
+  const navigation = useNavigation()
+
+  const openDrawer = () => {
+    navigation.dispatch(DrawerActions.toggleDrawer())
   }
 
-  componentDidMount() {
-    auth.onAuthStateChanged(user => {
+  useEffect(() => {
+    const unsubscribe = auth.onAuthStateChanged(user => {
       if (!user) {
-        this.setState({
-          loggedIn: false,
-          loaded: true,
-        })
+        setLoggedIn(false)
+        setLoaded(true)
       } else {
-        user.emailVerified
-          ? this.setState({
-              loggedIn: true,
-              loaded: true,
-            })
-          : this.setState({
-              loggedIn: false,
-              loaded: true,
-            })
+        setLoggedIn(user.emailVerified)
+        setLoaded(true)
       }
     })
+    console.log("UseEffect APP", unsubscribe)
+    return unsubscribe
+  }, [])
+
+  if (!loaded) {
+    return <Loader loading={loaded} />
   }
-  render() {
-    const { loggedIn, loaded } = this.state
-    if (!loaded) {
-      return <Loader loading={loaded} />
-    }
-    return !loggedIn ? (
-      <NavigationContainer>
-        <Stack.Navigator initialRouteName="Login">
-          <Stack.Screen
-            name="Register"
-            component={RegisterScreen}
-            navigation={this.props.navigation}
-            options={{ headerShown: false }}
+
+  return !loggedIn ? (
+    <Stack.Navigator initialRouteName="Login">
+      <Stack.Screen
+        name="Register"
+        component={RegisterScreen}
+        options={{ headerShown: false }}
+      />
+      <Stack.Screen
+        name="Login"
+        component={LoginScreen}
+        options={{ headerShown: false }}
+      />
+      <Stack.Screen
+        name="ForgotPassword"
+        component={ForgotPasswordScreen}
+        options={{ headerShown: false }}
+      />
+    </Stack.Navigator>
+  ) : (
+    <Drawer.Navigator
+      useLegacyImplementation
+      drawerContent={props => <LogOut {...props} />}
+      initialRouteName="Main"
+      screenOptions={{
+        headerLeft: () => null,
+        headerRight: ({ color, size = 26 }) => (
+          <MaterialCommunityIcons
+            name="account"
+            color={color}
+            style={{ marginRight: 20 }}
+            size={size}
+            onPress={() => openDrawer()}
           />
-          <Stack.Screen
-            name="Login"
-            navigation={this.props.navigation}
-            component={LoginScreen}
-            options={{ headerShown: false }}
-          />
-        </Stack.Navigator>
-      </NavigationContainer>
-    ) : (
-      <Provider store={store}>
-        <NavigationContainer>
-          <Stack.Navigator initialRouteName="Main">
-            <Stack.Screen
-              name="Cursos"
-              component={MainScreen}
-              options={{ title: "Cursos" }}
+        ),
+        drawerPosition: "right",
+      }}
+    >
+      <Drawer.Screen
+        name="Main"
+        component={MainScreen}
+        options={{
+          title: title,
+          drawerItemStyle: { display: "none" },
+        }}
+      />
+      <Drawer.Screen
+        name="Califications"
+        component={CalificationsScreen}
+        options={{
+          headerShown: true,
+          headerLeft: ({ color, size = 26 }) => (
+            <MaterialCommunityIcons
+              name="arrow-left"
+              color={color}
+              style={{ marginLeft: 15 }}
+              size={size}
+              onPress={() => navigation.goBack()}
             />
-          </Stack.Navigator>
-        </NavigationContainer>
-      </Provider>
-    )
-  }
+          ),
+          title: "Calificaciones",
+        }}
+      />
+      <Drawer.Screen
+        name="ChangePassword"
+        component={ChangePassword}
+        options={{
+          headerShown: true,
+          headerLeft: ({ color, size = 26 }) => (
+            <MaterialCommunityIcons
+              name="arrow-left"
+              color={color}
+              style={{ marginLeft: 15 }}
+              size={size}
+              onPress={() => navigation.goBack()}
+            />
+          ),
+          title: "Cambiar contraseña",
+        }}
+      />
+    </Drawer.Navigator>
+  )
 }
 
-export default App
+const mapStateToProps = state => {
+  console.log("mapStatetoProps APP")
+  return {
+    title: state.navigationState.title,
+  }
+}
+console.log("Connected APP")
+const ConnectedApp = connect(mapStateToProps)(App)
 
-const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: "#fff",
-    alignItems: "center",
-    justifyContent: "center",
-  },
-})
+const Root = () => {
+  return (
+    <Provider store={store}>
+      <NavigationContainer>
+        <ConnectedApp />
+      </NavigationContainer>
+    </Provider>
+  )
+}
+export default Root

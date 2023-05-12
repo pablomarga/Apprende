@@ -10,7 +10,8 @@ import {
   KeyboardAvoidingView,
 } from "react-native"
 import React, { useState, createRef } from "react"
-import { auth, db } from "../../../firebase"
+import { db } from "../../../firebase"
+import { registerUser } from "./util"
 import { fetchLogo } from "../util"
 import Loader from "../../Loader"
 import RegisterModal from "./RegisterModal"
@@ -30,30 +31,7 @@ const RegisterScreen = ({ navigation }) => {
   const passwordInputRef = createRef()
   const passwordRepeatInputRef = createRef()
 
-  const registerUser = async () => {
-    try {
-      await auth.createUserWithEmailAndPassword(email, password)
-      await auth.currentUser.sendEmailVerification({
-        handleCodeInApp: true,
-        url: "https://apprende-5aa76.firebaseapp.com",
-      })
-      setHasRegistered(true)
-    } catch (error) {
-      console.log(error)
-    }
-    try {
-      db.collection("users").doc(auth.currentUser.uid).set({
-        name,
-        email,
-        image: "default",
-        isAdmin: false,
-        isTeacher: false,
-      })
-    } catch (error) {
-      console.log("Error guardando usuario", error)
-    }
-  }
-  const onRegister = () => {
+  const onRegister = async () => {
     setLoading(true)
     if (name.lenght == 0 || email.length == 0 || password.length == 0) {
       setIsValid({
@@ -84,35 +62,28 @@ const RegisterScreen = ({ navigation }) => {
       setLoading(false)
       return
     }
+    const userData = {
+      name: name,
+      email: email,
+      password: password,
+      isAdmin: false,
+      isTeacher: false,
+    }
 
-    db.collection("users")
-      .where("email", "==", email)
-      .get()
-      .then(async snapshot => {
-        if (!snapshot.exist) {
-          try {
-            await registerUser()
-            setLoading(false)
-          } catch (error) {
-            setLoading(false)
-            console.log(error)
-            setIsValid({
-              bool: true,
-              boolSnack: true,
-              message: "Email no valido",
-            })
-          }
-        }
+    try {
+      await registerUser(userData)
+      setHasRegistered(true)
+      setLoading(false)
+    } catch (error) {
+      setLoading(false)
+      setIsValid({
+        bool: true,
+        boolSnack: true,
+        message: error,
       })
-      .catch(() => {
-        setLoading(false)
-        setIsValid({
-          bool: true,
-          boolSnack: true,
-          message: "Something went wrong",
-        })
-      })
+    }
   }
+
   fetchLogo().then(val => {
     setLogo(val)
   })
@@ -140,7 +111,7 @@ const RegisterScreen = ({ navigation }) => {
           />
         </View>
         <KeyboardAvoidingView enabled>
-          <View style={styles.SectionStyle}>
+          <View style={styles.sectionStyle}>
             <TextInput
               style={styles.inputStyle}
               onChangeText={name => setName(name)}
@@ -156,7 +127,7 @@ const RegisterScreen = ({ navigation }) => {
               blurOnSubmit={false}
             />
           </View>
-          <View style={styles.SectionStyle}>
+          <View style={styles.sectionStyle}>
             <TextInput
               style={styles.inputStyle}
               onChangeText={email => setEmail(email)}
@@ -173,10 +144,10 @@ const RegisterScreen = ({ navigation }) => {
             />
           </View>
 
-          <View style={styles.SectionStyle}>
+          <View style={styles.sectionStyle}>
             <TextInput
               style={styles.inputStyle}
-              onChangeText={UserPassword => setPassword(UserPassword)}
+              onChangeText={userPassword => setPassword(userPassword)}
               placeholder="Contraseña"
               placeholderTextColor="#8b9cb5"
               keyboardType="default"
@@ -192,10 +163,10 @@ const RegisterScreen = ({ navigation }) => {
             />
           </View>
 
-          <View style={styles.SectionStyle}>
+          <View style={styles.sectionStyle}>
             <TextInput
               style={styles.inputStyle}
-              onChangeText={UserPassword => setPasswordRepeat(UserPassword)}
+              onChangeText={userPassword => setPasswordRepeat(userPassword)}
               placeholder="Repite la contraseña"
               placeholderTextColor="#8b9cb5"
               keyboardType="default"
@@ -230,8 +201,9 @@ const RegisterScreen = ({ navigation }) => {
 }
 
 export default RegisterScreen
+
 const styles = StyleSheet.create({
-  SectionStyle: {
+  sectionStyle: {
     flexDirection: "row",
     height: 40,
     marginTop: 20,
