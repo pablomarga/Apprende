@@ -9,7 +9,7 @@ import {
   TouchableOpacity,
   KeyboardAvoidingView,
 } from "react-native"
-import React, { useState, createRef, useEffect } from "react"
+import React, { useState, createRef } from "react"
 import { auth } from "../../../firebase"
 import { fetchLogo } from "../util"
 import Loader from "../../Loader"
@@ -40,7 +40,6 @@ const LoginScreen = ({ navigation }) => {
     auth
       .signInWithEmailAndPassword(email, password)
       .then(() => {
-        console.log("VERIFIED", auth.currentUser.emailVerified)
         !auth.currentUser.emailVerified &&
           setErrorText("Por favor para continuar verifica el email")
 
@@ -54,6 +53,8 @@ const LoginScreen = ({ navigation }) => {
 
   const onNavigateRegister = () => {
     setErrorText("")
+    console.log(navigation)
+
     navigation.navigate("Register")
   }
   const onNavigateForgot = () => {
@@ -121,11 +122,14 @@ const LoginScreen = ({ navigation }) => {
             <TouchableOpacity
               style={styles.buttonStyle}
               activeOpacity={0.5}
-              onPress={onSignUp}
+              onPress={() => onSignUp()}
             >
               <Text style={styles.buttonTextStyle}>LOGIN</Text>
             </TouchableOpacity>
-            <Text style={styles.registerTextStyle} onPress={() => onNavigateRegister()}>
+            <Text
+              style={styles.registerTextStyle}
+              onPress={() => onNavigateRegister()}
+            >
               ¿Nuevo aquí? Register
             </Text>
             <Text

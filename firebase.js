@@ -30,8 +30,10 @@ if (firebase.apps.length === 0) {
 }
 
 const db = app.firestore()
+const FieldValue = firebase.firestore.FieldValue
+const FieldPath = firebase.firestore.FieldPath
 const auth = firebase.auth()
 const storage = getStorage()
 const imagesRef = ref(storage, "images")
 
-export { db, auth, storage, imagesRef }
+export { db, auth, storage, imagesRef, FieldValue, FieldPath }

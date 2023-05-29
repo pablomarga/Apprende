@@ -1,7 +1,7 @@
 import React, { useState } from "react"
 import { View, Text, Modal, TouchableOpacity } from "react-native"
 
-const RegisterModal = () => {
+const CustomModal = ({ title, message }) => {
   const [isVisible, setIsVisible] = useState(true)
 
   const handleConfirm = () => {
@@ -25,13 +25,9 @@ const RegisterModal = () => {
       >
         <View style={{ backgroundColor: "white", padding: 20 }}>
           <Text style={{ fontSize: 20, fontWeight: "bold", marginBottom: 10 }}>
-            Verificación de email mandada
+            {title}
           </Text>
-          <Text style={{ marginBottom: 20 }}>
-            Se ha enviado un correo electrónico de verificación a su dirección
-            de correo electrónico. Por favor, haga clic en el enlace para
-            verificar su cuenta.
-          </Text>
+          <Text style={{ marginBottom: 20 }}>{message}</Text>
           <TouchableOpacity onPress={handleConfirm}>
             <Text style={{ color: "blue", textAlign: "right" }}>OK</Text>
           </TouchableOpacity>
@@ -41,4 +37,4 @@ const RegisterModal = () => {
   )
 }
 
-export default RegisterModal
+export default CustomModal

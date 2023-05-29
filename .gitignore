@@ -12,6 +12,6 @@ web-build/
 *yarn*
 *metro*
 .env
-
+%ProgramData%
 # macOS
 .DS_Store

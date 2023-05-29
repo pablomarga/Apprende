@@ -112,7 +112,7 @@ const navbar = StyleSheet.create({
 
   title: {
     fontWeight: "700",
-    fontSize: 20, //'larger',
+    fontSize: 20,
   },
 })
 const container = StyleSheet.create({

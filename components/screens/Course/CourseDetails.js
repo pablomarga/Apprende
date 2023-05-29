@@ -1,18 +1,13 @@
 import React, { useState, useEffect } from "react"
 import { View, Text } from "react-native"
-import { Calendar } from "react-native-calendars"
-import { auth, db } from "../../firebase"
 
-const CalendarScreen = () => {
+const CourseDetails = () => {
   const [courses, setCourses] = useState([])
   const [events, setEvents] = useState({})
 
-  // useEffect(() => {
-  //   const currentUser = auth.currentUser
-  //   if (!currentUser) {
-  //     // user not logged in
-  //     return
-  //   }
+  useEffect(() => {
+    console.log('ENTRA EN DETAILS')
+  }, [])
 
   //   const userRef = db.collection("users").doc(currentUser.uid)
   //   userRef.get().then(doc => {
@@ -64,9 +59,9 @@ const CalendarScreen = () => {
 
   return (
     <View>
-      <Text>Calendario</Text>
+      <Text>Curso </Text>
     </View>
   )
 }
 
-export default CalendarScreen
+export default CourseDetails

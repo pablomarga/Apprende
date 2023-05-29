@@ -10,11 +10,10 @@ import {
   KeyboardAvoidingView,
 } from "react-native"
 import React, { useState, createRef } from "react"
-import { db } from "../../../firebase"
 import { registerUser } from "./util"
 import { fetchLogo } from "../util"
 import Loader from "../../Loader"
-import RegisterModal from "./RegisterModal"
+import CustomModal from "../CustomModal"
 
 const RegisterScreen = ({ navigation }) => {
   const [name, setName] = useState("")
@@ -87,11 +86,13 @@ const RegisterScreen = ({ navigation }) => {
   fetchLogo().then(val => {
     setLogo(val)
   })
-
+  const successText =
+    "Se ha enviado un correo electrónico de verificación a su dirección de correo electrónico. Por favor, haga clic en el enlace para verificar su cuenta."
+  const successTitle = "Verificación de email mandada"
   return (
     <View style={{ flex: 1, backgroundColor: "#307ecc" }}>
       <Loader loading={loading} />
-      {hasRegistered && <RegisterModal />}
+      {hasRegistered && <CustomModal message={successText} title={successTitle} />}
       <ScrollView
         keyboardShouldPersistTaps="handled"
         contentContainerStyle={{
@@ -186,7 +187,7 @@ const RegisterScreen = ({ navigation }) => {
             activeOpacity={0.5}
             onPress={() => onRegister()}
           >
-            <Text style={styles.buttonTextStyle}>REGISTER</Text>
+            <Text style={styles.buttonTextStyle}>REGISTRO</Text>
           </TouchableOpacity>
           <Text
             style={styles.loginTextStyle}

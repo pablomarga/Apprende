@@ -1,7 +1,6 @@
 import "react-native-gesture-handler"
 import React, { useState, useEffect } from "react"
 import { Provider, connect } from "react-redux"
-import { StyleSheet } from "react-native"
 import {
   NavigationContainer,
   DrawerActions,
@@ -51,7 +50,6 @@ const App = ({ title }) => {
         setLoaded(true)
       }
     })
-    console.log("UseEffect APP", unsubscribe)
     return unsubscribe
   }, [])
 
@@ -60,21 +58,18 @@ const App = ({ title }) => {
   }
 
   return !loggedIn ? (
-    <Stack.Navigator initialRouteName="Login">
+    <Stack.Navigator initialRouteName="Login" screenOptions={{ headerShown: false }} >
       <Stack.Screen
         name="Register"
         component={RegisterScreen}
-        options={{ headerShown: false }}
       />
       <Stack.Screen
         name="Login"
         component={LoginScreen}
-        options={{ headerShown: false }}
       />
       <Stack.Screen
         name="ForgotPassword"
         component={ForgotPasswordScreen}
-        options={{ headerShown: false }}
       />
     </Stack.Navigator>
   ) : (
@@ -84,6 +79,7 @@ const App = ({ title }) => {
       initialRouteName="Main"
       screenOptions={{
         headerLeft: () => null,
+        unmountOnBlur: true,
         headerRight: ({ color, size = 26 }) => (
           <MaterialCommunityIcons
             name="account"
@@ -143,12 +139,10 @@ const App = ({ title }) => {
 }
 
 const mapStateToProps = state => {
-  console.log("mapStatetoProps APP")
   return {
     title: state.navigationState.title,
   }
 }
-console.log("Connected APP")
 const ConnectedApp = connect(mapStateToProps)(App)
 
 const Root = () => {
