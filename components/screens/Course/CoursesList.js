@@ -1,5 +1,4 @@
 import React, { useState, useEffect } from "react"
-import { auth } from "../../../firebase"
 import {
   FlatList,
   SafeAreaView,
@@ -36,11 +35,12 @@ const CoursesList = ({ navigation, currentUser }) => {
 
   const onNavigateCourseDetails = itemId => {
     setSelectedId(itemId)
-    navigation.navigate("CourseDetails")
+    const selectedCourse = courseData.find(item => item.id === itemId)
+    navigation.navigate("CourseDetailsNavigation", selectedCourse)
   }
   const renderItem = ({ item }) => {
-    const backgroundColor = item.id === selectedId ? "#181818" : "#929494"
-    const color = item.id === selectedId ? "white" : "black"
+    const backgroundColor = "#929494"
+    const color = "black"
 
     return (
       <Item

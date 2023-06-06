@@ -79,7 +79,6 @@ const App = ({ title }) => {
       initialRouteName="Main"
       screenOptions={{
         headerLeft: () => null,
-        unmountOnBlur: true,
         headerRight: ({ color, size = 26 }) => (
           <MaterialCommunityIcons
             name="account"

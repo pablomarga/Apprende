@@ -6,7 +6,7 @@ import { fetchUser } from "./redux/actions/index"
 import { saveTabTitle } from "./redux/actions/tabTitle"
 import Ionicons from "@expo/vector-icons/Ionicons"
 import Loader from "./Loader"
-import { CalendarScreen, NotificationScreen, AddCourse } from "./screens"
+import { CalendarScreen, NotificationScreen, AddCourse, CoursesList } from "./screens"
 import CourseNavigation from "./screens/Course/CourseNavigation"
 
 const Main = ({ fetchUser, saveTabTitle, currentUser, navigation }) => {
@@ -41,7 +41,7 @@ const Main = ({ fetchUser, saveTabTitle, currentUser, navigation }) => {
         }}
       >
         {() => (
-          <CourseNavigation navigation={navigation} currentUser={currentUser} />
+          <CourseNavigation navigation={navigation} currentUser={currentUser}/>
         )}
       </Tab.Screen>
       {(currentUser.isTeacher || currentUser.isAdmin) && (

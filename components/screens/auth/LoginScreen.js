@@ -53,7 +53,6 @@ const LoginScreen = ({ navigation }) => {
 
   const onNavigateRegister = () => {
     setErrorText("")
-    console.log(navigation)
 
     navigation.navigate("Register")
   }

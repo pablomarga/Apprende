@@ -1,12 +1,11 @@
 import React, { useState, useEffect } from "react"
 import { View, Text } from "react-native"
 
-const CourseDetails = () => {
-  const [courses, setCourses] = useState([])
+const CourseDetails = ({ currentUser, saveTabTitle, courseName, courseId }) => {
   const [events, setEvents] = useState({})
 
   useEffect(() => {
-    console.log('ENTRA EN DETAILS')
+    saveTabTitle(courseName)
   }, [])
 
   //   const userRef = db.collection("users").doc(currentUser.uid)
@@ -57,10 +56,11 @@ const CourseDetails = () => {
   //   }
   // })
 
+ 
   return (
-    <View>
-      <Text>Curso </Text>
-    </View>
+    <Text>
+      Course ID: {courseId}, Course Name: {courseName}
+    </Text>
   )
 }
 
