@@ -4,15 +4,13 @@ import {
   DrawerItemList,
   DrawerItem,
 } from "@react-navigation/drawer"
-import { DrawerActions, useNavigation } from "@react-navigation/native"
 import { auth } from "../../../firebase"
 
-const LogOut = props => {
-  const navigation = useNavigation()
-
+const LogOut = ({ reset, ...props }) => {
   const onLogOut = async () => {
-    navigation.dispatch(DrawerActions.toggleDrawer())
+    props.navigation.closeDrawer()
     await auth.signOut()
+    reset()
   }
 
   return (

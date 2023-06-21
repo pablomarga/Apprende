@@ -6,17 +6,20 @@ import { fetchUser } from "./redux/actions/index"
 import { saveTabTitle } from "./redux/actions/tabTitle"
 import Ionicons from "@expo/vector-icons/Ionicons"
 import Loader from "./Loader"
-import { CalendarScreen, NotificationScreen, AddCourse, CoursesList } from "./screens"
+import { CalendarScreen, NotificationScreen, AddCourse } from "./screens"
 import CourseNavigation from "./screens/Course/CourseNavigation"
+import { useRoute } from "@react-navigation/native"
 
 const Main = ({ fetchUser, saveTabTitle, currentUser, navigation }) => {
   useEffect(() => {
     fetchUser()
   }, [])
   const Tab = createBottomTabNavigator()
+  const route = useRoute()
 
   const handleTabPress = title => {
-    saveTabTitle(title)
+    const titleRedux = { name: title, route: route.name }
+    saveTabTitle(titleRedux)
   }
   return currentUser != null ? (
     <Tab.Navigator
@@ -41,7 +44,11 @@ const Main = ({ fetchUser, saveTabTitle, currentUser, navigation }) => {
         }}
       >
         {() => (
-          <CourseNavigation navigation={navigation} currentUser={currentUser}/>
+          <CourseNavigation
+            navigation={navigation}
+            currentUser={currentUser}
+            saveTabTitle={saveTabTitle}
+          />
         )}
       </Tab.Screen>
       {(currentUser.isTeacher || currentUser.isAdmin) && (

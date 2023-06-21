@@ -1,22 +1,18 @@
 import { db, auth } from "../../../firebase"
-import {
-  USER_STATE_CHANGE,
-  CLEAR_DATA,
-  SEND_VERIFICATION_EMAIL_SUCCESS,
-} from "../constants"
+import { USER_STATE_CHANGE, RESET_STATE } from "../constants"
 
 let unsubscribe = []
 
-export function clearData() {
+export function resetData() {
   return dispatch => {
     for (let i = unsubscribe; i < unsubscribe.length; i++) {
       unsubscribe[i]()
     }
-    dispatch({ type: CLEAR_DATA })
+    dispatch({ type: RESET_STATE })
   }
 }
 
-export function reload() {
+const reload = () => {
   return dispatch => {
     dispatch(clearData())
     dispatch(fetchUser())
@@ -43,30 +39,16 @@ const fetchUser = () => {
     unsubscribe.push(listener)
   }
 }
-
-const registerUser = async (email, password) => {
-  return dispatch => {
-    try {
-      const userCredential = auth.createUserWithEmailAndPassword(
-        email,
-        password
-      )
-      dispatch(sendVerificationEmail(userCredential.user))
-    } catch (error) {
-      console.log(error)
-    }
+const saveTabTitle = title => {
+  return {
+    type: UPDATE_TITLE,
+    payload: title,
+  }
+}
+const reset = () => {
+  return {
+    type: RESET_STATE,
   }
 }
 
-const sendVerificationEmail = user => {
-  return async dispatch => {
-    try {
-      await user.sendEmailVerification()
-      dispatch({ type: SEND_VERIFICATION_EMAIL_SUCCESS })
-    } catch (error) {
-      console.log(error)
-    }
-  }
-}
-
-export { fetchUser, sendVerificationEmail, registerUser }
+export { fetchUser, saveTabTitle, reset }

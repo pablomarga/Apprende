@@ -1,11 +1,13 @@
+import { useRoute } from "@react-navigation/native"
 import React, { useState, useEffect } from "react"
 import { View, Text } from "react-native"
 
 const CourseDetails = ({ currentUser, saveTabTitle, courseName, courseId }) => {
   const [events, setEvents] = useState({})
-
+  const route = useRoute()
   useEffect(() => {
-    saveTabTitle(courseName)
+    const title = {name: courseName, route: route.name}
+    saveTabTitle(title)
   }, [])
 
   //   const userRef = db.collection("users").doc(currentUser.uid)

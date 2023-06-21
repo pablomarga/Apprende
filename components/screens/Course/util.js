@@ -6,22 +6,27 @@ const getStudentCourses = async userId => {
 
   const userData = userDoc.data()
   const courseIds = userData.courseIds
-
-  const coursesRef = await db.collection("courses")
-  const coursesQuery = coursesRef.where(FieldPath.documentId(), "in", courseIds)
-  const coursesSnapshot = await coursesQuery.get()
   const courses = []
 
-  coursesSnapshot.forEach(courseDoc => {
-    const courseData = courseDoc.data()
-    console.log("\nCourse data de UTil", courseData)
-    const course = {
-      id: courseDoc.id,
-      title: courseData.title,
-    }
+  const coursesRef = await db.collection("courses")
+  if (courseIds) {
+    const coursesQuery = coursesRef.where(
+      FieldPath.documentId(),
+      "in",
+      courseIds
+    )
+    const coursesSnapshot = await coursesQuery.get()
 
-    courses.push(course)
-  })
+    coursesSnapshot.forEach(courseDoc => {
+      const courseData = courseDoc.data()
+      const course = {
+        id: courseDoc.id,
+        title: courseData.title,
+      }
+
+      courses.push(course)
+    })
+  }
 
   return courses
 }
@@ -35,7 +40,6 @@ const getTeacherCourses = async userId => {
   const teacherCourses = []
   teacherCoursesRef.forEach(doc => {
     const courseData = doc.data()
-    console.log("\nCourse data de UTil Profesor", courseData)
 
     const course = {
       id: doc.id,

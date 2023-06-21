@@ -8,25 +8,21 @@ import {
   KeyboardAvoidingView,
   ScrollView,
   TouchableOpacity,
-  Alert,
   StyleSheet,
 } from "react-native"
 import DateTimePicker from "@react-native-community/datetimepicker"
-import { db, FieldValue } from "../../../firebase"
+import { db } from "../../../firebase"
 import { SafeAreaView } from "react-native-safe-area-context"
 import CustomModal from "../CustomModal"
 
-const AddCourse = ({ currentUser }) => {
-  const [courseTitle, setCourseTitle] = useState("")
+const AddAssignment = ({ currentUser }) => {
+  const [assignmentTitle, setAssignmentTitle] = useState("")
   const [selectedDate, setSelectedDate] = useState(new Date())
-  const [courseDate, setCourseDate] = useState("")
-  const [teacherMail, setTeacherMail] = useState("")
-  const [userIsTeacher, setUserTeacher] = useState(false)
-  const [studentsMail, setStudentsMail] = useState("")
+  const [assignmentDate, setAssignmentDate] = useState("")
   const [formIsReady, setFormIsReady] = useState(false)
   const [showPicker, setShowPicker] = useState(false)
   const [errorMessage, setErrorMessage] = useState("")
-  const [courseCreated, setCourseCreated] = useState(false)
+  const [assingmentCreated, setAssingmentCreated] = useState(false)
 
   const dateOptions = {
     weekday: "short",
@@ -36,118 +32,44 @@ const AddCourse = ({ currentUser }) => {
   }
 
   useEffect(() => {
-    currentUser.isTeacher ? setTeacherMail(currentUser.email) : null
-    if (courseTitle && teacherMail && studentsMail && courseDate) {
+    if (assignmentTitle && assignmentDate) {
       setFormIsReady(true)
     } else {
       setFormIsReady(false)
     }
-    setUserTeacher(currentUser.isTeacher)
-  }, [courseTitle, teacherMail, studentsMail, courseDate, userIsTeacher])
+  }, [assignmentTitle, assignmentDate])
   const addCourse = async () => {
     if (formIsReady) {
       try {
-        const professorId = await getProfessorId(teacherMail)
-
-        if (!professorId) {
-          console.error("El usuario actual no es un profesor válido")
-          return
-        }
-
-        const courseId = await createCourse(professorId)
-        await addStudentsToCourse(courseId)
-        setCourseCreated(true)
+        const courseId = await createAssignment()
+        setAssingmentCreated(true)
 
         resetForm()
       } catch (error) {
-        setErrorMessage("Error al agregar el curso")
+        setErrorMessage("Error al agregar la entrega")
       }
     } else {
       setErrorMessage("Rellena todos los campos")
     }
   }
 
-  const getProfessorId = async teacherMail => {
-    const profesorRef = await db
-      .collection("users")
-      .where("email", "==", teacherMail)
-      .where("isTeacher", "==", true)
-      .limit(1)
-      .get()
-
-    if (profesorRef.empty) {
-      return null
-    }
-    return profesorRef.docs[0].id
-  }
-
-  const createCourse = async professorId => {
+  const createAssignment = async () => {
     const options = { day: "2-digit", month: "2-digit", year: "numeric" }
     const formattedDate = selectedDate.toLocaleDateString("es-ES", options)
 
     const cursoRef = await db.collection("courses").add({
-      title: courseTitle,
+      title: assignmentTitle,
       initDate: formattedDate,
-      teacherId: professorId,
     })
 
     const courseId = cursoRef.id
 
-    // Crear la subcolección "forum" en el curso recién creado
-    await db.collection("courses").doc(courseId).collection("forum").add({})
-
     return courseId
   }
 
-  const addStudentsToCourse = async courseId => {
-    const studentsEmailArray = studentsMail
-      .split(",")
-      .map(email => email.trim())
-
-    for (const studentEmail of studentsEmailArray) {
-      const studentRef = await db
-        .collection("users")
-        .where("email", "==", studentEmail)
-        .limit(1)
-        .get()
-
-      if (studentRef.empty) {
-        Alert.alert(`El estudiante con email ${studentEmail} no existe`)
-        continue
-      }
-      const studentId = studentRef.docs[0].id
-      await db
-        .collection("users")
-        .doc(studentId)
-        .update({
-          courseIds: FieldValue.arrayUnion(courseId),
-        })
-      const studentData = studentRef.docs[0].data()
-      await db
-        .collection("courses")
-        .doc(courseId)
-        .collection("students")
-        .doc(studentId)
-        .set({
-          studentId: studentId,
-          studentName: studentData.name,
-        })
-
-      await db
-        .collection("courses")
-        .doc(courseId)
-        .collection("students")
-        .doc(studentId)
-        .collection("assignments")
-        .add({})
-    }
-  }
-
   const resetForm = () => {
-    setCourseTitle("")
-    setCourseDate("")
-    setTeacherMail("")
-    setStudentsMail("")
+    setAssignmentTitle("")
+    setAssignmentDate("")
     setErrorMessage("")
   }
 
@@ -163,18 +85,18 @@ const AddCourse = ({ currentUser }) => {
         toggleDatePicker()
       }
       setSelectedDate(currentDate)
-      setCourseDate(currentDate.toLocaleDateString("es-ES", dateOptions))
+      setAssignmentDate(currentDate.toLocaleDateString("es-ES", dateOptions))
     } else {
       toggleDatePicker()
     }
 
     setSelectedDate(currentDate)
-    setCourseDate(currentDate.toLocaleDateString("es-ES", dateOptions))
+    setAssignmentDate(currentDate.toLocaleDateString("es-ES", dateOptions))
   }
   const onChangeDateWeb = selectedDate => {
     const currentDate = new Date(selectedDate)
     setSelectedDate(currentDate)
-    setCourseDate(currentDate.toLocaleDateString("es-ES", dateOptions))
+    setAssignmentDate(currentDate.toLocaleDateString("es-ES", dateOptions))
   }
 
   return (
@@ -188,50 +110,24 @@ const AddCourse = ({ currentUser }) => {
           showsVerticalScrollIndicator={false}
           contentContainerStyle={styles.contentContainer}
         >
-          {courseCreated && (
+          {assingmentCreated && (
             <CustomModal
-              title={"Curso creado satisfactoriamente"}
-              message={
-                "El curso y los alumnos fueron añadidas de forma correcta"
-              }
+              title={"Entrega creado satisfactoriamente"}
+              message={"La entrega ha sido añadida correctamente"}
             />
           )}
           <View style={styles.sectionStyle}>
-            <Text style={styles.label}>Nombre del curso</Text>
+            <Text style={styles.label}>Nombre del entrega</Text>
             <TextInput
               style={styles.input}
               placeholder="ISE II Trinity"
-              value={courseTitle}
-              onChangeText={setCourseTitle}
-              placeholderTextColor="#11182744"
-            />
-          </View>
-          {!userIsTeacher && (
-            <View style={styles.sectionStyle}>
-              <Text style={styles.label}>Email del profesor</Text>
-              <TextInput
-                style={styles.input}
-                placeholder="johndoe@gmail.com"
-                value={teacherMail}
-                autoCapitalize="none"
-                onChangeText={setTeacherMail}
-                placeholderTextColor="#11182744"
-              />
-            </View>
-          )}
-          <View style={styles.sectionStyle}>
-            <Text style={styles.label}>Email de los alumnos</Text>
-            <TextInput
-              style={styles.input}
-              placeholder="mario@gmail.com, marta@gmail.com "
-              value={studentsMail}
-              onChangeText={setStudentsMail}
-              autoCapitalize="none"
+              value={assignmentTitle}
+              onChangeText={setAssignmentTitle}
               placeholderTextColor="#11182744"
             />
           </View>
           <View style={styles.sectionStyle}>
-            <Text style={styles.label}>Comienzo del curso</Text>
+            <Text style={styles.label}>Fecha de entrega</Text>
             {Platform.OS === "web" ? (
               <input
                 style={styles.webInput}
@@ -256,7 +152,7 @@ const AddCourse = ({ currentUser }) => {
                   <TextInput
                     style={styles.input}
                     placeholder="Jue 18 de mayo de 2025"
-                    value={courseDate}
+                    value={assignmentDate}
                     placeholderTextColor="#11182744"
                     editable={false}
                   />
@@ -271,7 +167,7 @@ const AddCourse = ({ currentUser }) => {
             ]}
             onPress={addCourse}
           >
-            <Text style={styles.buttonText}>Añadir curso</Text>
+            <Text style={styles.buttonText}>Añadir entrega</Text>
           </TouchableOpacity>
           {!formIsReady ? (
             <Text style={styles.errorTextStyle}>{errorMessage}</Text>
@@ -282,7 +178,7 @@ const AddCourse = ({ currentUser }) => {
   )
 }
 
-export default AddCourse
+export default AddAssignment
 
 const styles = StyleSheet.create({
   container: {
@@ -314,7 +210,7 @@ const styles = StyleSheet.create({
     borderRadius: 50,
     borderWidth: 1.5,
     paddingHorizontal: 20,
-    marginRight: 20
+    marginRight: 20,
   },
   button: {
     backgroundColor: "#075985",
@@ -352,7 +248,7 @@ const styles = StyleSheet.create({
     borderWidth: 1.5,
     borderColor: "#111827cc",
     paddingHorizontal: 20,
-    marginRight: 20
+    marginRight: 20,
   },
   errorTextStyle: {
     color: "red",

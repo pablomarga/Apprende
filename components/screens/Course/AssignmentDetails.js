@@ -1,13 +1,13 @@
 import React, { useState, useEffect } from "react"
 import { View, Text } from "react-native"
 
-const AssignmentScreen = () => {
+const AssignmentDetails = () => {
 
   return (
     <View>
-      <Text>Assignment</Text>
+      <Text>Assignment details</Text>
     </View>
   )
 }
 
-export default AssignmentScreen
+export default AssignmentDetails

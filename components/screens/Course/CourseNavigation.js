@@ -1,23 +1,24 @@
 import React from "react"
 import { createMaterialTopTabNavigator } from "@react-navigation/material-top-tabs"
 import { createStackNavigator } from "@react-navigation/stack"
-import { CourseDetails, AssignmentScreen, CoursesList } from "../index"
-import { connect } from "react-redux"
+import { CourseDetails, AssignmentList, CoursesList } from "../index"
 import { useRoute } from "@react-navigation/native"
-import { bindActionCreators } from "redux"
-import { saveTabTitle } from "../../redux/actions/tabTitle"
 
 const Stack = createStackNavigator()
 const Tab = createMaterialTopTabNavigator()
 
-const CourseDetailsNavigation = ({ currentUser, navigation, saveTabTitle }) => {
+const CourseDetailsNavigation = ({ currentUser, saveTabTitle }) => {
   const route = useRoute()
 
   const { id: courseId, title: courseName } = route.params
-
   return (
     <Tab.Navigator initialRouteName="CourseDetails">
-      <Tab.Screen name="CourseDetails">
+      <Tab.Screen
+        name="CourseDetails"
+        options={{
+          title: "Recursos",
+        }}
+      >
         {() => (
           <CourseDetails
             currentUser={currentUser}
@@ -27,7 +28,19 @@ const CourseDetailsNavigation = ({ currentUser, navigation, saveTabTitle }) => {
           />
         )}
       </Tab.Screen>
-      <Tab.Screen name="Assignments" component={AssignmentScreen} />
+      <Tab.Screen
+        name="AssignmentNavigation"
+        options={{
+          title: "Entregas",
+        }}
+      >
+        {() => (
+          <AssignmentNavigation
+          currentUser={currentUser}
+          saveTabTitle={saveTabTitle}
+          />
+        )}
+      </Tab.Screen>
     </Tab.Navigator>
   )
 }
@@ -49,7 +62,6 @@ const CourseNavigation = ({ currentUser, navigation, saveTabTitle }) => {
       <Stack.Screen name="CourseDetailsNavigation">
         {() => (
           <CourseDetailsNavigation
-            navigation={navigation}
             currentUser={currentUser}
             saveTabTitle={saveTabTitle}
           />
@@ -59,7 +71,29 @@ const CourseNavigation = ({ currentUser, navigation, saveTabTitle }) => {
   )
 }
 
-const mapDispatchToProps = dispatch => {
-  return bindActionCreators({ saveTabTitle }, dispatch)
+const AssignmentNavigation = ({ currentUser, saveTabTitle }) => {
+  return (
+    <Stack.Navigator
+      initialRouteName="AssignmentList"
+      screenOptions={{ headerShown: false }}
+    >
+      <Stack.Screen
+        name="AssignmentList"
+        component={AssignmentList}
+        options={{
+          title: "Material",
+        }}
+      />
+      <Stack.Screen name="AssignmentDetails">
+        {() => (
+          <AssignmentDetails
+            currentUser={currentUser}
+            saveTabTitle={saveTabTitle}
+          />
+        )}
+      </Stack.Screen>
+    </Stack.Navigator>
+  )
 }
-export default connect(null, mapDispatchToProps)(CourseNavigation)
+
+export default CourseNavigation

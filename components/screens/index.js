@@ -4,7 +4,8 @@ import CalendarScreen from "./CalendarScreen"
 import NotificationScreen from "./NotificationScreen"
 import AddCourse from "./Course/AddCourse"
 import CourseDetails from "./Course/CourseDetails"
-import AssignmentScreen from "./Course/Assignment"
+import AssignmentList from "./Course/AssignmentList"
+import AssignmentDetails from "./Course/AssignmentDetails"
 
 export {
   CoursesList,
@@ -13,5 +14,6 @@ export {
   NotificationScreen,
   AddCourse,
   CourseDetails,
-  AssignmentScreen
+  AssignmentList,
+  AssignmentDetails
 }

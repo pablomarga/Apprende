@@ -14,6 +14,7 @@ import {
   LoginScreen,
   RegisterScreen,
   ForgotPasswordScreen,
+  TeacherRegistration,
 } from "./components/screens/auth"
 import MainScreen from "./components/Main"
 import {
@@ -24,20 +25,28 @@ import {
 import { auth } from "./firebase"
 import Loader from "./components/Loader"
 import rootReducer from "./components/redux/reducers"
+import { saveTabTitle } from "./components/redux/actions/tabTitle"
+import { reset } from "./components/redux/actions/index"
+import { bindActionCreators } from "redux"
 
 const store = configureStore({ reducer: rootReducer })
 
 const Stack = createStackNavigator()
 const Drawer = createDrawerNavigator()
-
-const App = ({ title }) => {
+const App = ({ title, saveTabTitle, reset, currentUser }) => {
   const [loggedIn, setLoggedIn] = useState(false)
   const [loaded, setLoaded] = useState(false)
 
   const navigation = useNavigation()
-
   const openDrawer = () => {
     navigation.dispatch(DrawerActions.toggleDrawer())
+  }
+
+  const handleGoBack = () => {
+    const routeName = "CoursesList"
+    const titleRedux = { name: "Cursos", route: routeName }
+    saveTabTitle(titleRedux)
+    navigation.navigate(routeName)
   }
 
   useEffect(() => {
@@ -56,26 +65,19 @@ const App = ({ title }) => {
   if (!loaded) {
     return <Loader loading={loaded} />
   }
-
   return !loggedIn ? (
-    <Stack.Navigator initialRouteName="Login" screenOptions={{ headerShown: false }} >
-      <Stack.Screen
-        name="Register"
-        component={RegisterScreen}
-      />
-      <Stack.Screen
-        name="Login"
-        component={LoginScreen}
-      />
-      <Stack.Screen
-        name="ForgotPassword"
-        component={ForgotPasswordScreen}
-      />
+    <Stack.Navigator
+      initialRouteName="Login"
+      screenOptions={{ headerShown: false }}
+    >
+      <Stack.Screen name="Register" component={RegisterScreen} />
+      <Stack.Screen name="Login" component={LoginScreen} />
+      <Stack.Screen name="ForgotPassword" component={ForgotPasswordScreen} />
     </Stack.Navigator>
   ) : (
     <Drawer.Navigator
       useLegacyImplementation
-      drawerContent={props => <LogOut {...props} />}
+      drawerContent={props => <LogOut {...props} reset={reset} />}
       initialRouteName="Main"
       screenOptions={{
         headerLeft: () => null,
@@ -95,8 +97,19 @@ const App = ({ title }) => {
         name="Main"
         component={MainScreen}
         options={{
-          title: title,
+          title: title.name,
           drawerItemStyle: { display: "none" },
+          headerLeft: ({ color, size = 26 }) => {
+            return title.route === "CourseDetails" ? (
+              <MaterialCommunityIcons
+                name="arrow-left"
+                color={color}
+                style={{ marginLeft: 15 }}
+                size={size}
+                onPress={() => handleGoBack()}
+              />
+            ) : null
+          },
         }}
       />
       <Drawer.Screen
@@ -133,6 +146,25 @@ const App = ({ title }) => {
           title: "Cambiar contraseña",
         }}
       />
+      {(currentUser != null && currentUser.isAdmin) && (
+        <Drawer.Screen
+          name="TeacherRegistration"
+          component={TeacherRegistration}
+          options={{
+            headerShown: true,
+            headerLeft: ({ color, size = 26 }) => (
+              <MaterialCommunityIcons
+                name="arrow-left"
+                color={color}
+                style={{ marginLeft: 15 }}
+                size={size}
+                onPress={() => navigation.goBack()}
+              />
+            ),
+            title: "Añadir profesor",
+          }}
+        />
+      )}
     </Drawer.Navigator>
   )
 }
@@ -140,9 +172,13 @@ const App = ({ title }) => {
 const mapStateToProps = state => {
   return {
     title: state.navigationState.title,
+    currentUser: state.userState.currentUser,
   }
 }
-const ConnectedApp = connect(mapStateToProps)(App)
+const mapDispatchToProps = dispatch => {
+  return bindActionCreators({ saveTabTitle, reset }, dispatch)
+}
+const ConnectedApp = connect(mapStateToProps, mapDispatchToProps)(App)
 
 const Root = () => {
   return (
