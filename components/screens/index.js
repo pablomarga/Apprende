@@ -1,19 +1,23 @@
 import CoursesList from "./Course/CoursesList"
 import UserScreen from "./User/LogOut"
 import CalendarScreen from "./CalendarScreen"
-import NotificationScreen from "./NotificationScreen"
 import AddCourse from "./Course/AddCourse"
-import CourseDetails from "./Course/CourseDetails"
+import CourseMaterial from "./Course/CourseMaterial"
 import AssignmentList from "./Course/AssignmentList"
 import AssignmentDetails from "./Course/AssignmentDetails"
+import AddAssignment from "./Course/AddAssignment"
+import AddStudent from './Course/AddStudent'
+import StudentList from "./Course/StudentList"
 
 export {
   CoursesList,
   UserScreen,
   CalendarScreen,
-  NotificationScreen,
   AddCourse,
-  CourseDetails,
+  CourseMaterial,
   AssignmentList,
-  AssignmentDetails
+  AssignmentDetails,
+  AddAssignment,
+  AddStudent,
+  StudentList
 }

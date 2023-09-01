@@ -1,5 +1,5 @@
 import ChangePassword from "./ChangePassword"
-import CalificationsScreen from "./Califications"
 import LogOut from "./LogOut"
+import ChangeName from "./ChangeName"
 
-export { ChangePassword, CalificationsScreen, LogOut }
+export { ChangePassword, LogOut, ChangeName }

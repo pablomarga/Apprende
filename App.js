@@ -6,9 +6,11 @@ import {
   DrawerActions,
   useNavigation,
 } from "@react-navigation/native"
+import { View, Text } from "react-native"
 import { createStackNavigator } from "@react-navigation/stack"
 import { createDrawerNavigator } from "@react-navigation/drawer"
 import MaterialCommunityIcons from "react-native-vector-icons/MaterialCommunityIcons"
+import { MaterialIcons, FontAwesome5 } from "@expo/vector-icons"
 import { configureStore } from "@reduxjs/toolkit"
 import {
   LoginScreen,
@@ -17,11 +19,7 @@ import {
   TeacherRegistration,
 } from "./components/screens/auth"
 import MainScreen from "./components/Main"
-import {
-  ChangePassword,
-  CalificationsScreen,
-  LogOut,
-} from "./components/screens/User"
+import { ChangePassword, LogOut, ChangeName } from "./components/screens/User"
 import { auth } from "./firebase"
 import Loader from "./components/Loader"
 import rootReducer from "./components/redux/reducers"
@@ -81,15 +79,42 @@ const App = ({ title, saveTabTitle, reset, currentUser }) => {
       initialRouteName="Main"
       screenOptions={{
         headerLeft: () => null,
-        headerRight: ({ color, size = 26 }) => (
-          <MaterialCommunityIcons
-            name="account"
-            color={color}
-            style={{ marginRight: 20 }}
-            size={size}
-            onPress={() => openDrawer()}
-          />
-        ),
+        headerRight: ({ color, size = 26 }) => {
+          const icon = currentUser?.isAdmin ? (
+            <MaterialIcons
+              name="admin-panel-settings"
+              color={color}
+              style={{ marginRight: 20 }}
+              size={size}
+              onPress={() => openDrawer()}
+            />
+          ) : currentUser?.isTeacher ? (
+            <FontAwesome5
+              name="chalkboard-teacher"
+              color={color}
+              style={{ marginRight: 20 }}
+              size={size}
+              onPress={() => openDrawer()}
+            />
+          ) : (
+            <MaterialCommunityIcons
+              name="account"
+              color={color}
+              style={{ marginRight: 20 }}
+              size={size}
+              onPress={() => openDrawer()}
+            />
+          )
+
+          return (
+            <View style={{ flexDirection: "row" }}>
+              <Text style={{ color: color, fontSize: 16, paddingEnd: 15 }}>
+                {currentUser?.name}
+              </Text>
+              {icon}
+            </View>
+          )
+        },
         drawerPosition: "right",
       }}
     >
@@ -100,7 +125,7 @@ const App = ({ title, saveTabTitle, reset, currentUser }) => {
           title: title.name,
           drawerItemStyle: { display: "none" },
           headerLeft: ({ color, size = 26 }) => {
-            return title.route === "CourseDetails" ? (
+            return title.route === "CourseMaterial" ? (
               <MaterialCommunityIcons
                 name="arrow-left"
                 color={color}
@@ -110,23 +135,6 @@ const App = ({ title, saveTabTitle, reset, currentUser }) => {
               />
             ) : null
           },
-        }}
-      />
-      <Drawer.Screen
-        name="Califications"
-        component={CalificationsScreen}
-        options={{
-          headerShown: true,
-          headerLeft: ({ color, size = 26 }) => (
-            <MaterialCommunityIcons
-              name="arrow-left"
-              color={color}
-              style={{ marginLeft: 15 }}
-              size={size}
-              onPress={() => navigation.goBack()}
-            />
-          ),
-          title: "Calificaciones",
         }}
       />
       <Drawer.Screen
@@ -146,7 +154,24 @@ const App = ({ title, saveTabTitle, reset, currentUser }) => {
           title: "Cambiar contraseña",
         }}
       />
-      {(currentUser != null && currentUser.isAdmin) && (
+      <Drawer.Screen
+        name="ChangeName"
+        component={ChangeName}
+        options={{
+          headerShown: true,
+          headerLeft: ({ color, size = 26 }) => (
+            <MaterialCommunityIcons
+              name="arrow-left"
+              color={color}
+              style={{ marginLeft: 15 }}
+              size={size}
+              onPress={() => navigation.goBack()}
+            />
+          ),
+          title: "Cambiar nombre",
+        }}
+      />
+      {currentUser != null && currentUser.isAdmin && (
         <Drawer.Screen
           name="TeacherRegistration"
           component={TeacherRegistration}

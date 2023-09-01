@@ -2,67 +2,90 @@ import React, { useState, useEffect } from "react"
 import {
   View,
   TextInput,
-  Dimensions,
   Text,
   Platform,
   KeyboardAvoidingView,
   ScrollView,
+  Alert,
   TouchableOpacity,
   StyleSheet,
 } from "react-native"
-import { db } from "../../../firebase"
+import { db, FieldValue } from "../../../firebase"
 import { SafeAreaView } from "react-native-safe-area-context"
 import CustomModal from "../CustomModal"
 
-const TeacherRegistration = () => {
-  const [email, setEmail] = useState("")
-  const [teacherAdded, setTeacherAdded] = useState(false)
+const AddStudent = ({ courseId }) => {
+  const [studentsMail, setStudentsMail] = useState("")
   const [formIsReady, setFormIsReady] = useState(false)
   const [errorMessage, setErrorMessage] = useState("")
+  const [studentAdded, setStudentAdded] = useState(false)
 
   useEffect(() => {
-    if (email) {
+    if (studentsMail) {
       setFormIsReady(true)
     } else {
       setFormIsReady(false)
     }
-  }, [email])
+  }, [studentsMail])
 
-  const onReset = () => {
-    setEmail("")
-    setTeacherAdded(false)
-    setFormIsReady(false)
-    setErrorMessage("")
+  const resetForm = () => {
+    setStudentsMail("")
   }
-  const handleSearch = async () => {
-    try {
-      const userQuery = await db
-        .collection("users")
-        .where("email", "==", email)
-        .get()
-      if (userQuery.size === 0) {
-        userQuery.size === 0
-        setErrorMessage(`No existe el usuario con email: ${email}.`)
-      } else {
-        const userDoc = userQuery.docs[0]
-        const userData = userDoc.data()
 
-        if (!userData.isTeacher) {
-          await userDoc.ref.update({ isTeacher: true })
-          setTeacherAdded(true)
-        } else {
-          setErrorMessage(`El usuario ya es un profesor.`)
+  const addStudentsToCourse = async () => {
+    if (formIsReady) {
+      const studentsEmailArray = studentsMail
+        .split(",")
+        .map(email => email.trim())
+
+      for (const studentEmail of studentsEmailArray) {
+        const studentRef = await db
+          .collection("users")
+          .where("email", "==", studentEmail)
+          .limit(1)
+          .get()
+
+        if (studentRef.empty) {
+          Alert.alert(
+            `El estudiante con email ${studentEmail} no existe y por tanto no será añadido`
+          )
+          continue
         }
+        const studentId = studentRef.docs[0].id
+        await db
+          .collection("users")
+          .doc(studentId)
+          .update({
+            courseIds: FieldValue.arrayUnion(courseId),
+          })
+        const studentData = studentRef.docs[0].data()
+        await db
+          .collection("courses")
+          .doc(courseId)
+          .collection("students")
+          .doc(studentId)
+          .set({
+            studentId: studentId,
+            studentName: studentData.name,
+          })
+
+        await db
+          .collection("courses")
+          .doc(courseId)
+          .collection("students")
+          .doc(studentId)
+          .collection("assignments")
+          .add({})
       }
-    } catch (error) {
-      console.error(error)
-      setErrorMessage("Error al agregar el profesor")
+      setStudentAdded(true)
+    } else {
+      setErrorMessage("Introduce un email")
     }
   }
 
   return (
     <SafeAreaView style={styles.container}>
-      <KeyboardAvoidingView
+      <View
         style={{ flex: 1 }}
         behavior={Platform.OS === "ios" ? "padding" : "height"}
         keyboardVerticalOffset={10}
@@ -71,21 +94,20 @@ const TeacherRegistration = () => {
           showsVerticalScrollIndicator={false}
           contentContainerStyle={styles.contentContainer}
         >
-          {teacherAdded && (
+          {studentAdded && (
             <CustomModal
-              title={"Profesor añadido"}
-              message={`El usuario con email: ${email} ha sido correctamente actualizado.`}
-              onReset={onReset}
+              title={"Alumno/s añadido satisfactoriamente"}
+              message={"Los alumnos fueron añadidos de forma correcta"}
+              onReset={resetForm}
             />
           )}
-
           <View style={styles.sectionStyle}>
-            <Text style={styles.label}>Email del usuario</Text>
+            <Text style={styles.label}>Email de los alumnos</Text>
             <TextInput
               style={styles.input}
-              placeholder="mario@gmail.com "
-              value={email}
-              onChangeText={setEmail}
+              placeholder="mario@gmail.com, marta@gmail.com "
+              value={studentsMail}
+              onChangeText={setStudentsMail}
               autoCapitalize="none"
               placeholderTextColor="#11182744"
             />
@@ -95,20 +117,19 @@ const TeacherRegistration = () => {
               styles.button,
               { backgroundColor: formIsReady ? "#075985" : "#11182744" },
             ]}
-            onPress={handleSearch}
+            onPress={addStudentsToCourse}
           >
-            <Text style={styles.buttonText}>Añadir profesor</Text>
+            <Text style={styles.buttonText}>Añadir alumno</Text>
           </TouchableOpacity>
-          {!formIsReady ? (
-            <Text style={styles.errorTextStyle}>{errorMessage}</Text>
-          ) : null}
+
+          <Text style={styles.errorTextStyle}>{errorMessage}</Text>
         </ScrollView>
-      </KeyboardAvoidingView>
+      </View>
     </SafeAreaView>
   )
 }
 
-export default TeacherRegistration
+export default AddStudent
 
 const styles = StyleSheet.create({
   container: {
@@ -119,7 +140,6 @@ const styles = StyleSheet.create({
   },
   contentContainer: {
     justifyContent: "center",
-    marginTop: 15,
     alignContent: "center",
   },
   sectionStyle: {
@@ -128,9 +148,7 @@ const styles = StyleSheet.create({
   label: {
     fontSize: 13,
     fontWeight: "500",
-    marginBottom: 12,
-    marginLeft: 10,
-
+    marginBottom: 10.2,
     color: "#111827cc",
   },
   input: {
@@ -155,7 +173,7 @@ const styles = StyleSheet.create({
     borderRadius: 30,
     marginLeft: 35,
     marginRight: 35,
-    marginTop: 5,
+    marginTop: 20,
     marginBottom: 20,
   },
   buttonText: {

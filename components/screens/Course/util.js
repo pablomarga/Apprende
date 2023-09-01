@@ -1,4 +1,7 @@
-import { db, FieldPath } from "../../../firebase"
+import { db, FieldPath, storage } from "../../../firebase"
+import { Platform } from "react-native"
+import * as DocumentPicker from "expo-document-picker"
+import { ref, uploadBytes } from "firebase/storage"
 
 const getStudentCourses = async userId => {
   const userRef = db.collection("users").doc(userId)
@@ -50,51 +53,188 @@ const getTeacherCourses = async userId => {
 
   return teacherCourses
 }
+const getAssignments = async courseId => {
+  const assignmentRef = await db
+    .collection("courses")
+    .doc(courseId)
+    .collection("assignments")
+    .get()
+  const assignments = []
+  assignmentRef.forEach(doc => {
+    const assingmentData = doc.data()
 
-const getCourseDetails = async courseId => {}
-const createAssignmentForCourse = async (courseId, assignmentDetails) => {
-  // Obtener todos los documentos de la colección principal "Students"
-  try {
-    const studentsSnapshot = await db.collection("students").get()
+    const assignment = {
+      id: doc.id,
+      title: assingmentData.title,
+      deadline: assingmentData.deadline,
+    }
+    assignments.push(assignment)
+  })
+  return assignments
+}
 
-    studentsSnapshot.forEach(async studentDoc => {
-      const studentId = studentDoc.id
+const getAdminCourses = async () => {
+  const adminCoursesRef = await db.collection("courses").get()
 
-      try {
-        // Agregar un nuevo Assignment en la subcolección "Assignments" para el estudiante actual
-        const assignmentRef = await db
-          .collection("students")
-          .doc(studentId)
-          .collection("assignments")
-          .add({
-            // Datos del nuevo Assignment
-            // Puedes agregar más campos aquí según tus necesidades
-            title: "Título del Assignment",
-            description: "Descripción del Assignment",
-            calification: null,
-            // Otros campos...
-          })
+  const adminCourses = []
+  adminCoursesRef.forEach(doc => {
+    const courseData = doc.data()
 
-        console.log(
-          `Nuevo Assignment agregado para el estudiante con ID: ${studentId}`
-        )
-      } catch (error) {
-        console.error(
-          `Error al agregar el Assignment para el estudiante con ID: ${studentId}`,
-          error
-        )
-      }
-    })
-  } catch (error) {
-    console.error(
-      'Error al obtener los documentos de la colección "Students"',
-      error
-    )
+    const course = {
+      id: doc.id,
+      title: courseData.title,
+    }
+    adminCourses.push(course)
+  })
+
+  return adminCourses
+}
+
+const uploadFile = async (fileRef, fileUpload, fileType = null) => {
+  if (Platform.OS === "web") {
+    await uploadBytes(fileRef, fileUpload)
+  } else {
+    await uploadBytes(fileRef, fileUpload, { contentType: fileType })
   }
 }
 
-// const addCalificationToAssignMent = async assignmentId => {
+const docPicker = async () => {
+  let fileObject = {}
+  try {
+    const res = await DocumentPicker.getDocumentAsync({})
 
-// }
+    if (Platform.OS === "web") {
+      fileObject["fileToUpload"] = res.file
+    } else {
+      const { uri, type } = res
+      const response = await fetch(uri)
+      const blob = await response.blob()
+      fileObject.typeFile = type
+      fileObject["fileToUpload"] = blob
+      // fileObject.fileToUpload = blob
+    }
+    fileObject.fileName = res.name
+  } catch (err) {
+    throw err
+  }
+  return fileObject
+}
 
-export { getStudentCourses, getTeacherCourses }
+const getFileName = async downloadUrl => {
+  // Extraer el nombre del archivo de la URL
+  const decodedUrl = decodeURIComponent(downloadUrl)
+  const fileNameWithQuery = decodedUrl.split("/").pop()
+
+  // Eliminamos los parámetros de consulta para así el nombre del archivo
+  const fileName = fileNameWithQuery.split("?")[0]
+
+  return fileName
+}
+const getStudentList = async courseId => {
+  const studentRef = await db
+    .collection("courses")
+    .doc(courseId)
+    .collection("students")
+    .get()
+  const students = []
+  studentRef.forEach(doc => {
+    const studentData = doc.data()
+    const student = {
+      id: doc.id,
+      name: studentData.studentName,
+    }
+    students.push(student)
+  })
+  return students
+}
+
+const getAssignmentDetails = async (assignmentId, courseId) => {
+  try {
+    const assignmentRef = await db
+      .collection("courses")
+      .doc(courseId)
+      .collection("assignments")
+      .doc(assignmentId)
+      .get()
+    if (assignmentRef) {
+      const assignmentData = assignmentRef.data()
+      return assignmentData
+    } else {
+      // El documento no existe
+      return null
+    }
+  } catch (error) {
+    // Manejo de errores
+    console.error("Error fetching assignment:", error)
+    return null
+  }
+}
+
+const getGrade = async (courseId, assignmentUser, assignmentId) => {
+  const assignmentRef = db
+    .collection("courses")
+    .doc(courseId)
+    .collection("students")
+    .doc(assignmentUser.id)
+    .collection("assignments")
+    .doc(assignmentId)
+
+  const assignmentDoc = await assignmentRef.get()
+
+  if (assignmentDoc.exists) {
+    const existingGrades = assignmentDoc.data().grade
+    if (existingGrades) {
+      const gradeDescription = {
+        grade: assignmentDoc.data().grade,
+        observations: assignmentDoc.data().observations,
+      }
+      return gradeDescription
+    } else {
+      return null
+    }
+  } else {
+    console.log("El documento no existe.")
+    return null
+  }
+}
+
+const checkFileUploaded = async (courseId, assignmentUser, assignmentId) => {
+  const assignmentRef = db
+    .collection("courses")
+    .doc(courseId)
+    .collection("students")
+    .doc(assignmentUser.id)
+    .collection("assignments")
+    .doc(assignmentId)
+
+  const assignmentDoc = await assignmentRef.get()
+
+  if (assignmentDoc.exists) {
+    const existingTaskDownloadUrl = assignmentDoc.data().taskDownloadUrl
+    if (existingTaskDownloadUrl) {
+      const fileUrl = assignmentDoc.data().taskDownloadUrl
+      const fileName = await getFileName(fileUrl)
+      const studentFile = { name: fileName, downloadUrl: fileUrl }
+      return studentFile
+    } else {
+      return null
+    }
+  } else {
+    console.log("El documento no existe.")
+    return null
+  }
+}
+
+export {
+  getStudentCourses,
+  getTeacherCourses,
+  getAdminCourses,
+  getAssignments,
+  docPicker,
+  uploadFile,
+  getFileName,
+  getStudentList,
+  getAssignmentDetails,
+  getGrade,
+  checkFileUploaded,
+}

@@ -1,16 +1,21 @@
 import React, { useState, useEffect } from "react"
 import { FlatList, SafeAreaView, StatusBar, StyleSheet } from "react-native"
-import { getAssignments } from "./util"
+import { getStudentList } from "./util"
 import Item from "../Item"
 
-const AssignmentList = ({ navigation, courseId, currentUser }) => {
+const StudentList = ({
+  courseId,
+  assignmentName,
+  assignmentId,
+  navigation,
+}) => {
   const [selectedId, setSelectedId] = useState()
-  const [assignmentData, setAssignmentData] = useState([])
+  const [studentData, setStudentData] = useState([])
 
   useEffect(() => {
     const fetchData = async () => {
-      const data = await getAssignments(courseId)
-      setAssignmentData(data)
+      const data = await getStudentList(courseId)
+      setStudentData(data)
     }
 
     fetchData()
@@ -18,26 +23,16 @@ const AssignmentList = ({ navigation, courseId, currentUser }) => {
 
   const onNavigateAssignmentDetails = itemId => {
     setSelectedId(itemId)
-    const selectedAssignment = assignmentData.find(item => item.id === itemId)
-    const userWithId = {
-      ...currentUser,
-      id: currentUser.uid, // Agregar la nueva clave 'id' con el valor de 'uid'
+    const selectedStudent = studentData.find(item => item.id === itemId)
+    const assignmentAndStudent = {
+      id: assignmentId,
+      title: assignmentName,
+      user: selectedStudent,
     }
-
-    // Eliminar la clave 'uid' del objeto si es necesario
-    delete userWithId.uid
-    const assingmentAndUser = {
-      ...selectedAssignment,
-      user: userWithId,
-    }
-    currentUser.isTeacher || currentUser.isAdmin
-      ? navigation.navigate("AssignmentDetailsNavigation", {
-          screen: "StudentList",
-          params: assingmentAndUser,
-        })
-      : navigation.navigate("AssignmentDetailsNavigation", {
-          params: assingmentAndUser,
-        })
+    navigation.navigate("AssignmentDetailsNavigation", {
+      screen: "AssignmentDetails",
+      params: assignmentAndStudent,
+    })
   }
 
   const renderItem = ({ item }) => {
@@ -56,7 +51,7 @@ const AssignmentList = ({ navigation, courseId, currentUser }) => {
   return (
     <SafeAreaView style={styles.container}>
       <FlatList
-        data={assignmentData}
+        data={studentData}
         renderItem={renderItem}
         keyExtractor={item => item.id}
         extraData={selectedId}
@@ -72,4 +67,4 @@ const styles = StyleSheet.create({
   },
 })
 
-export default AssignmentList
+export default StudentList

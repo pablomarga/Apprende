@@ -6,7 +6,7 @@ import { fetchUser } from "./redux/actions/index"
 import { saveTabTitle } from "./redux/actions/tabTitle"
 import Ionicons from "@expo/vector-icons/Ionicons"
 import Loader from "./Loader"
-import { CalendarScreen, NotificationScreen, AddCourse } from "./screens"
+import { CalendarScreen, AddCourse } from "./screens"
 import CourseNavigation from "./screens/Course/CourseNavigation"
 import { useRoute } from "@react-navigation/native"
 
@@ -51,7 +51,7 @@ const Main = ({ fetchUser, saveTabTitle, currentUser, navigation }) => {
           />
         )}
       </Tab.Screen>
-      {(currentUser.isTeacher || currentUser.isAdmin) && (
+      {currentUser.isAdmin && (
         <Tab.Screen
           name="AddCourse"
           listeners={{
@@ -71,7 +71,6 @@ const Main = ({ fetchUser, saveTabTitle, currentUser, navigation }) => {
       )}
       <Tab.Screen
         name="Calendar"
-        component={CalendarScreen}
         listeners={{
           tabPress: () => {
             handleTabPress("Calendario")
@@ -83,22 +82,9 @@ const Main = ({ fetchUser, saveTabTitle, currentUser, navigation }) => {
             <Ionicons name="calendar" color={color} size={size} />
           ),
         }}
-      />
-      <Tab.Screen
-        name="Notifications"
-        component={NotificationScreen}
-        listeners={{
-          tabPress: () => {
-            handleTabPress("Notificaciones")
-          },
-        }}
-        options={{
-          tabBarLabel: () => null,
-          tabBarIcon: ({ color, size = 26 }) => (
-            <Ionicons name="notifications" color={color} size={size} />
-          ),
-        }}
-      />
+      >
+        {() => <CalendarScreen currentUser={currentUser} />}
+      </Tab.Screen>
     </Tab.Navigator>
   ) : (
     <Loader loading={currentUser != null} />

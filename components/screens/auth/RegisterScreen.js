@@ -30,9 +30,18 @@ const RegisterScreen = ({ navigation }) => {
   const passwordInputRef = createRef()
   const passwordRepeatInputRef = createRef()
 
+  const onReset = () => {
+    setName("")
+    setEmail("")
+    setPassword("")
+    setPasswordRepeat("")
+    setLoading(false)
+    setIsValid(true)
+    setHasRegistered(false)
+  }
   const onRegister = async () => {
     setLoading(true)
-    if (name.lenght == 0 || email.length == 0 || password.length == 0) {
+    if (name.length == 0 || email.length == 0 || password.length == 0) {
       setIsValid({
         bool: true,
         boolSnack: true,
@@ -92,7 +101,13 @@ const RegisterScreen = ({ navigation }) => {
   return (
     <View style={{ flex: 1, backgroundColor: "#307ecc" }}>
       <Loader loading={loading} />
-      {hasRegistered && <CustomModal message={successText} title={successTitle} />}
+      {hasRegistered && (
+        <CustomModal
+          message={successText}
+          title={successTitle}
+          onReset={onReset}
+        />
+      )}
       <ScrollView
         keyboardShouldPersistTaps="handled"
         contentContainerStyle={{

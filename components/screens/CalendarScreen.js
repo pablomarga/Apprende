@@ -1,72 +1,169 @@
 import React, { useState, useEffect } from "react"
-import { View, Text } from "react-native"
-import { Calendar } from "react-native-calendars"
-import { auth, db } from "../../firebase"
+import {
+  View,
+  Text,
+  Modal,
+  TouchableOpacity,
+  TouchableWithoutFeedback,
+  StyleSheet,
+  Platform,
+} from "react-native"
+import { fetchAssignmentsForCalendar } from "./util"
+import { Calendar, LocaleConfig } from "react-native-calendars"
+import Loader from "../Loader"
+import MaterialCommunityIcons from "react-native-vector-icons/MaterialCommunityIcons"
 
-const CalendarScreen = () => {
-  const [courses, setCourses] = useState([])
-  const [events, setEvents] = useState({})
+LocaleConfig.locales["es"] = {
+  monthNames: [
+    "Enero",
+    "Febrero",
+    "Marzo",
+    "Abril",
+    "Mayo",
+    "Junio",
+    "Julio",
+    "Agosto",
+    "Septiembre",
+    "Octubre",
+    "Noviembre",
+    "Diciembre",
+  ],
+  dayNames: [
+    "Domingo",
+    "Lunes",
+    "Martes",
+    "Miercoles",
+    "Jueves",
+    "Viernes",
+    "Sábado",
+  ],
+  dayNamesShort: ["Dom.", "Lun.", "Mar.", "Mier.", "Jue.", "Vie.", "Sab."],
+  today: "Hoy",
+}
+LocaleConfig.defaultLocale = "es"
 
-  // useEffect(() => {
-  //   const currentUser = auth.currentUser
-  //   if (!currentUser) {
-  //     // user not logged in
-  //     return
-  //   }
+const CalendarScreen = ({ currentUser }) => {
+  const [assignments, setAssignments] = useState([])
+  const [markedDates, setMarkedDates] = useState({})
+  const [isLoading, setIsLoading] = useState(true)
+  const [selectedAssignment, setSelectedAssignment] = useState(null)
+  const [isModalVisible, setModalVisible] = useState(false)
 
-  //   const userRef = db.collection("users").doc(currentUser.uid)
-  //   userRef.get().then(doc => {
-  //     if (doc.exists) {
-  //       const userData = doc.data()
-  //       const courseIds = userData.courses || []
-  //       const coursesRef = db.collection("courses")
-  //       coursesRef
-  //         .where("id", "in", courseIds)
-  //         .get()
-  //         .then(querySnapshot => {
-  //           const courseData = querySnapshot.docs.map(doc => doc.data())
-  //           setCourses(courseData)
-  //         })
+  const markEvents = events => {
+    const marked = {}
+    events.forEach(event => {
+      const formattedDate = event.date
+      marked[formattedDate] = {
+        marked: true,
+        selectedColor: "blue",
+        title: event.title,
+        course: event.course,
+      }
+    })
+    return marked
+  }
 
-  //       const eventsRef = db.collection("events")
-  //       eventsRef
-  //         .where("courseId", "in", courseIds)
-  //         .get()
-  //         .then(querySnapshot => {
-  //           const eventData = querySnapshot.docs.map(doc => doc.data())
-  //           setEvents(eventData)
-  //         })
-  //     } else {
-  //       // user not found
-  //     }
-  //   })
-  // }, [])
+  // Creamos un componente flecha ya que no renderiza correctamente en web
+  const ArrowComponent = ({ direction }) => {
+    const iconColor = "black"
+    const iconSize = 24
 
-  // const markedDates = {}
-  // events.forEach(event => {
-  //   const course = courses.find(course => course.id === event.courseId)
-  //   if (course) {
-  //     const markedDate = event.date.toDate().toISOString().substring(0, 10)
-  //     if (!markedDates[markedDate]) {
-  //       markedDates[markedDate] = {
-  //         marked: true,
-  //         dotColor: "blue",
-  //         events: [],
-  //       }
-  //     }
-  //     markedDates[markedDate].events.push({
-  //       courseId: event.courseId,
-  //       courseName: course.name,
-  //       eventDescription: event.description,
-  //     })
-  //   }
-  // })
+    return (
+      <MaterialCommunityIcons
+        name={direction === "left" ? "arrow-left" : "arrow-right"}
+        color={iconColor}
+        size={iconSize}
+        style={{ marginLeft: 15 }}
+      />
+    )
+  }
+  const handleDayPress = day => {
+    const selectedDate = day.dateString
+    const selectedEvent = assignments.find(event => event.date === selectedDate)
+    if (selectedEvent != null) {
+      setSelectedAssignment(selectedEvent)
+      setModalVisible(true)
+    }
+  }
+
+  useEffect(() => {
+    const fetchData = async () => {
+      const assignments = await fetchAssignmentsForCalendar(currentUser)
+      setAssignments(assignments)
+      setIsLoading(false)
+
+      const marked = markEvents(assignments)
+      setMarkedDates(marked)
+    }
+
+    fetchData()
+  }, [])
+  const closeModal = () => {
+    setSelectedAssignment(null)
+    setModalVisible(false)
+  }
 
   return (
-    <View>
-      <Text>Calendario</Text>
+    <View style={styles.container}>
+      {isLoading ? (
+        <Loader loading={isLoading} />
+      ) : (
+        <View>
+          <Calendar
+            markedDates={markedDates}
+            onDayPress={day => handleDayPress(day)}
+            renderArrow={direction => <ArrowComponent direction={direction} />}
+          />
+          <Modal
+            visible={isModalVisible}
+            animationType="slide"
+            transparent={true}
+            onRequestClose={closeModal}
+          >
+            <TouchableWithoutFeedback onPress={closeModal}>
+              <View
+                style={{
+                  flex: 1,
+                  justifyContent: "center",
+                  alignItems: "center",
+                }}
+              >
+                <TouchableWithoutFeedback>
+                  <View style={{ backgroundColor: "white", padding: 20 }}>
+                    {selectedAssignment && selectedAssignment.title != null && (
+                      <View>
+                        <Text>Entrega: {selectedAssignment.title}</Text>
+                        <Text>Curso: {selectedAssignment.course}</Text>
+                      </View>
+                    )}
+                    <TouchableOpacity
+                      onPress={closeModal}
+                      style={{ position: "absolute", top: 10, right: 10 }}
+                    >
+                      <Text>X</Text>
+                    </TouchableOpacity>
+                  </View>
+                </TouchableWithoutFeedback>
+              </View>
+            </TouchableWithoutFeedback>
+          </Modal>
+        </View>
+      )}
     </View>
   )
 }
+
+const styles = StyleSheet.create({
+  container: {
+    flex: 1,
+    backgroundColor: "white",
+    alignContent: "center",
+  },
+  modalContainer: {
+    flex: 1,
+    justifyContent: "center",
+    alignItems: "center",
+  },
+})
 
 export default CalendarScreen

@@ -129,7 +129,7 @@ const LoginScreen = ({ navigation }) => {
               style={styles.registerTextStyle}
               onPress={() => onNavigateRegister()}
             >
-              ¿Nuevo aquí? Register
+              ¿Nuevo aquí? Regístrate
             </Text>
             <Text
               style={styles.registerTextStyle}

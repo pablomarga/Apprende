@@ -1,11 +1,16 @@
 import { ref, getDownloadURL } from "firebase/storage"
-import { storage } from "../../firebase"
+import { storage, db } from "../../firebase"
+import {
+  getAdminCourses,
+  getTeacherCourses,
+  getStudentCourses,
+} from "./Course/util"
 
 let appLogo
 const fetchLogo = () => {
   const logoRef = ref(storage, "images/logo.png")
   // Get the download URL
-  const test = getDownloadURL(logoRef)
+  const logoDownload = getDownloadURL(logoRef)
     .then(url => {
       return url
     })
@@ -25,10 +30,51 @@ const fetchLogo = () => {
           break
       }
     })
-    return test 
+  return logoDownload
 }
 
 fetchLogo().then(val => {
-  appLogo= val
+  appLogo = val
 })
-export { fetchLogo }
+
+const fetchAssignmentsForCalendar = async currentUser => {
+  // Consulta los cursos del usuario
+  const userCourses = currentUser.isTeacher
+    ? await getTeacherCourses(currentUser.uid)
+    : currentUser.isAdmin
+    ? await getAdminCourses()
+    : await getStudentCourses(currentUser.uid)
+
+  // Consulta las tareas de los cursos del usuario
+  const assignmentsData = await Promise.all(
+    userCourses.map(async course => {
+      const assignmentsRef = await db
+        .collection("courses")
+        .doc(course.id)
+        .collection("assignments")
+        .get()
+
+      const assignmentsInCourse = []
+
+      assignmentsRef.forEach(doc => {
+        const assignmentData = doc.data()
+        const assignment = {
+          id: doc.id,
+          title: assignmentData.title,
+          description: assignmentData.description,
+          date: assignmentData.deadline.split("/").reverse().join("-"),
+          course: course.title
+        }
+
+        assignmentsInCourse.push(assignment)
+      })
+
+      return assignmentsInCourse
+    })
+  )
+
+  // Concatenamos todos las entregas en una sola lista para que se muestren correctamente
+  const allAssignments = assignmentsData.flat()
+  return allAssignments
+}
+export { fetchLogo, fetchAssignmentsForCalendar }

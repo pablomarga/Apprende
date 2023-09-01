@@ -35,6 +35,7 @@ const FieldPath = firebase.firestore.FieldPath
 const auth = firebase.auth()
 const storage = getStorage()
 const imagesRef = ref(storage, "images")
-const assignmentsRef = ref(storage, "assignments")
+const coursesRef = ref(storage, "courses/")
 
-export { db, auth, storage, imagesRef, assignmentsRef, FieldValue, FieldPath }
+
+export { db, auth, storage, imagesRef, coursesRef, FieldValue, FieldPath }

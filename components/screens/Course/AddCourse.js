@@ -11,7 +11,7 @@ import {
   Alert,
   StyleSheet,
 } from "react-native"
-import DateTimePicker from "@react-native-community/datetimepicker"
+import DateTimePickerModal from "react-native-modal-datetime-picker"
 import { db, FieldValue } from "../../../firebase"
 import { SafeAreaView } from "react-native-safe-area-context"
 import CustomModal from "../CustomModal"
@@ -57,8 +57,6 @@ const AddCourse = ({ currentUser }) => {
         const courseId = await createCourse(professorId)
         await addStudentsToCourse(courseId)
         setCourseCreated(true)
-
-        resetForm()
       } catch (error) {
         setErrorMessage("Error al agregar el curso")
       }
@@ -93,8 +91,11 @@ const AddCourse = ({ currentUser }) => {
 
     const courseId = cursoRef.id
 
-    // Crear la subcolección "forum" en el curso recién creado
-    await db.collection("courses").doc(courseId).collection("forum").add({})
+    await db
+      .collection("courses")
+      .doc(courseId)
+      .collection("assignments")
+      .add({})
 
     return courseId
   }
@@ -155,8 +156,8 @@ const AddCourse = ({ currentUser }) => {
     setShowPicker(!showPicker)
   }
 
-  const onChange = ({ type = "set" }, selectedDate) => {
-    const currentDate = selectedDate
+  const handleConfirm = date => {
+    const currentDate = date
 
     if (type == "set") {
       if (Platform.OS === "android") {
@@ -171,7 +172,15 @@ const AddCourse = ({ currentUser }) => {
     setSelectedDate(currentDate)
     setCourseDate(currentDate.toLocaleDateString("es-ES", dateOptions))
   }
+
   const onChangeDateWeb = selectedDate => {
+    // Comprobamos que es una fecha válida para evitar errores
+    if (isNaN(new Date(selectedDate))) {
+      // Mostramos el error en consola
+      console.error("Fecha no válida:", selectedDate)
+      return
+    }
+
     const currentDate = new Date(selectedDate)
     setSelectedDate(currentDate)
     setCourseDate(currentDate.toLocaleDateString("es-ES", dateOptions))
@@ -194,6 +203,7 @@ const AddCourse = ({ currentUser }) => {
               message={
                 "El curso y los alumnos fueron añadidas de forma correcta"
               }
+              onReset={resetForm}
             />
           )}
           <View style={styles.sectionStyle}>
@@ -245,11 +255,14 @@ const AddCourse = ({ currentUser }) => {
             ) : (
               <>
                 {showPicker && (
-                  <DateTimePicker
-                    value={selectedDate || new Date()}
+                  <DateTimePickerModal
+                    date={selectedDate || new Date()}
                     mode="date"
-                    display="spinner"
-                    onChange={onChange}
+                    // onChange={onChange}
+                    isVisible={showPicker}
+                    onConfirm={handleConfirm}
+                    onCancel={toggleDatePicker}
+                    style={{ width: 320, backgroundColor: "white" }}
                   />
                 )}
                 <Pressable onPress={toggleDatePicker}>
@@ -314,7 +327,7 @@ const styles = StyleSheet.create({
     borderRadius: 50,
     borderWidth: 1.5,
     paddingHorizontal: 20,
-    marginRight: 20
+    marginRight: 20,
   },
   button: {
     backgroundColor: "#075985",
@@ -352,7 +365,7 @@ const styles = StyleSheet.create({
     borderWidth: 1.5,
     borderColor: "#111827cc",
     paddingHorizontal: 20,
-    marginRight: 20
+    marginRight: 20,
   },
   errorTextStyle: {
     color: "red",

@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react"
+import React, { useState, useEffect, useRef } from "react"
 import {
   View,
   TextInput,
@@ -11,18 +11,26 @@ import {
   StyleSheet,
 } from "react-native"
 import DateTimePicker from "@react-native-community/datetimepicker"
+import { ref, getDownloadURL } from "firebase/storage"
 import { db } from "../../../firebase"
 import { SafeAreaView } from "react-native-safe-area-context"
 import CustomModal from "../CustomModal"
+import AddAssignmentFile from "./AddAssignmentFile"
+import { storage } from "../../../firebase"
+import { uploadFile } from "./util"
 
-const AddAssignment = ({ currentUser }) => {
+const AddAssignment = ({ courseId }) => {
   const [assignmentTitle, setAssignmentTitle] = useState("")
+  const [assignmentDescription, setAssignmentDescription] = useState("")
   const [selectedDate, setSelectedDate] = useState(new Date())
   const [assignmentDate, setAssignmentDate] = useState("")
   const [formIsReady, setFormIsReady] = useState(false)
   const [showPicker, setShowPicker] = useState(false)
   const [errorMessage, setErrorMessage] = useState("")
   const [assingmentCreated, setAssingmentCreated] = useState(false)
+  const [fileUpload, setFileUpload] = useState(null)
+  const [selectedFileName, setSelectedFileName] = useState(null)
+  const [fileType, setFileType] = useState(null)
 
   const dateOptions = {
     weekday: "short",
@@ -38,13 +46,20 @@ const AddAssignment = ({ currentUser }) => {
       setFormIsReady(false)
     }
   }, [assignmentTitle, assignmentDate])
-  const addCourse = async () => {
+
+  const receiveDataFromChild = dataFromChild => {
+    const { fileToUpload, typeFile, fileName } = dataFromChild
+    setFileUpload(fileToUpload)
+    setSelectedFileName(fileName)
+    setFileType(typeFile)
+  }
+
+  const addAssignment = async () => {
     if (formIsReady) {
       try {
-        const courseId = await createAssignment()
+        const assignmentId = await createAssignment()
+        await handleUploadFile(assignmentId)
         setAssingmentCreated(true)
-
-        resetForm()
       } catch (error) {
         setErrorMessage("Error al agregar la entrega")
       }
@@ -53,24 +68,49 @@ const AddAssignment = ({ currentUser }) => {
     }
   }
 
+  const handleUploadFile = async assignmentId => {
+    const fileRef = ref(
+      storage,
+      `courses/${courseId}/assignment/${assignmentId}/material/${selectedFileName}`
+    )
+    if (fileUpload) {
+      await uploadFile(fileRef, fileUpload, fileType)
+      const fileRefDownload = await getDownloadURL(fileRef)
+      await db
+        .collection("courses")
+        .doc(courseId)
+        .collection("assignments")
+        .doc(assignmentId)
+        .update({
+          downloadUrl: fileRefDownload,
+        })
+    }
+  }
+
   const createAssignment = async () => {
     const options = { day: "2-digit", month: "2-digit", year: "numeric" }
     const formattedDate = selectedDate.toLocaleDateString("es-ES", options)
 
-    const cursoRef = await db.collection("courses").add({
-      title: assignmentTitle,
-      initDate: formattedDate,
-    })
+    const assignmentRef = await db
+      .collection("courses")
+      .doc(courseId)
+      .collection("assignments")
+      .add({
+        title: assignmentTitle,
+        deadline: formattedDate,
+        description: assignmentDescription,
+      })
 
-    const courseId = cursoRef.id
-
-    return courseId
+    const assignmentId = assignmentRef.id
+    return assignmentId
   }
 
   const resetForm = () => {
     setAssignmentTitle("")
+    setAssignmentDescription("")
     setAssignmentDate("")
     setErrorMessage("")
+    setSelectedDate(new Date())
   }
 
   const toggleDatePicker = () => {
@@ -93,7 +133,13 @@ const AddAssignment = ({ currentUser }) => {
     setSelectedDate(currentDate)
     setAssignmentDate(currentDate.toLocaleDateString("es-ES", dateOptions))
   }
+
   const onChangeDateWeb = selectedDate => {
+    if (isNaN(new Date(selectedDate))) {
+      console.error("Fecha no válida:", selectedDate)
+      return
+    }
+
     const currentDate = new Date(selectedDate)
     setSelectedDate(currentDate)
     setAssignmentDate(currentDate.toLocaleDateString("es-ES", dateOptions))
@@ -101,7 +147,7 @@ const AddAssignment = ({ currentUser }) => {
 
   return (
     <SafeAreaView style={styles.container}>
-      <KeyboardAvoidingView
+      <View
         style={{ flex: 1 }}
         behavior={Platform.OS === "ios" ? "padding" : "height"}
         keyboardVerticalOffset={10}
@@ -114,20 +160,41 @@ const AddAssignment = ({ currentUser }) => {
             <CustomModal
               title={"Entrega creado satisfactoriamente"}
               message={"La entrega ha sido añadida correctamente"}
+              onReset={resetForm}
             />
           )}
           <View style={styles.sectionStyle}>
-            <Text style={styles.label}>Nombre del entrega</Text>
+            <Text style={styles.label}>Nombre del entrega*</Text>
             <TextInput
               style={styles.input}
-              placeholder="ISE II Trinity"
+              placeholder="Tema 1 ejercicios"
               value={assignmentTitle}
               onChangeText={setAssignmentTitle}
               placeholderTextColor="#11182744"
             />
           </View>
           <View style={styles.sectionStyle}>
-            <Text style={styles.label}>Fecha de entrega</Text>
+            <Text style={styles.label}>Descripción de la entrega</Text>
+            <TextInput
+              style={styles.descriptionInput}
+              value={assignmentDescription}
+              onChangeText={setAssignmentDescription}
+              multiline
+              placeholderTextColor="#11182744"
+            />
+          </View>
+          <View style={styles.sectionStyle}>
+            <Text style={styles.label}>
+              Añadir archivo opcional a la entrega
+            </Text>
+            <AddAssignmentFile
+              courseId={courseId}
+              sendDataToParent={receiveDataFromChild}
+            />
+          </View>
+
+          <View style={styles.sectionStyle}>
+            <Text style={styles.label}>Fecha de límite entrega*</Text>
             {Platform.OS === "web" ? (
               <input
                 style={styles.webInput}
@@ -165,7 +232,7 @@ const AddAssignment = ({ currentUser }) => {
               styles.button,
               { backgroundColor: formIsReady ? "#075985" : "#11182744" },
             ]}
-            onPress={addCourse}
+            onPress={addAssignment}
           >
             <Text style={styles.buttonText}>Añadir entrega</Text>
           </TouchableOpacity>
@@ -173,7 +240,7 @@ const AddAssignment = ({ currentUser }) => {
             <Text style={styles.errorTextStyle}>{errorMessage}</Text>
           ) : null}
         </ScrollView>
-      </KeyboardAvoidingView>
+      </View>
     </SafeAreaView>
   )
 }
@@ -210,6 +277,18 @@ const styles = StyleSheet.create({
     borderRadius: 50,
     borderWidth: 1.5,
     paddingHorizontal: 20,
+    marginRight: 20,
+  },
+  descriptionInput: {
+    backgroundColor: "transparent",
+    height: 100,
+    fontSize: 14,
+    fontWeight: "500",
+    marginBottom: 20,
+    color: "#111827cc",
+    borderRadius: 50,
+    borderWidth: 1.5,
+    paddingHorizontal: 30,
     marginRight: 20,
   },
   button: {
