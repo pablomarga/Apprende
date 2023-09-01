@@ -13,5 +13,6 @@ web-build/
 *metro*
 .env
 %ProgramData%
+package-lock.json
 # macOS
 .DS_Store
