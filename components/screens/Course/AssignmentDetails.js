@@ -206,11 +206,10 @@ const AssignmentDetails = ({
                 <Button
                   style={{ marginBottom: 10 }}
                   mode="outlined"
-                  onPress={handleDownload}
+                  onPress={handleDownloadStudentFile}
                 >
                   Archivo de alumno: {existingStudentFile.name}
                 </Button>
-                // <Text>{existingStudentFile.name}</Text>
               )}
               {!isTeacher && (
                 <TouchableOpacity onPress={handlePicker} style={styles.button}>

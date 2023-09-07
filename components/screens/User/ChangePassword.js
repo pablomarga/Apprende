@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react"
+import React, { useState, useEffect, useCallback } from "react"
 import {
   View,
   StyleSheet,
@@ -6,11 +6,11 @@ import {
   TouchableOpacity,
   ScrollView,
   SafeAreaView,
-  Platform,
   Text,
 } from "react-native"
 import { EmailAuthProvider, reauthenticateWithCredential } from "firebase/auth"
 import { auth } from "../../../firebase"
+import { useFocusEffect } from "@react-navigation/native"
 
 const ChangePassword = () => {
   const [currentPassword, setCurrentPassword] = useState("")
@@ -27,7 +27,11 @@ const ChangePassword = () => {
       setFormIsReady(false)
     }
   }, [currentPassword, newPassword, newPasswordRepeat])
-
+  useFocusEffect(
+    useCallback(() => {
+      onReset()
+    }, [])
+  )
   const onReset = () => {
     setCurrentPassword("")
     setNewPassword("")
@@ -55,7 +59,7 @@ const ChangePassword = () => {
         try {
           await reauthenticateWithCredential(user, credential)
         } catch (error) {
-          console.log(error)
+          setErrorText("Contraseña actual incorrecta")
         }
 
         await user.updatePassword(newPassword)
@@ -71,9 +75,7 @@ const ChangePassword = () => {
 
   return (
     <SafeAreaView style={styles.container}>
-      <View
-        style={{ flex: 1 }}
-      >
+      <View style={{ flex: 1 }}>
         <ScrollView
           showsVerticalScrollIndicator={false}
           contentContainerStyle={styles.contentContainer}
@@ -124,9 +126,7 @@ const ChangePassword = () => {
           >
             <Text style={styles.buttonText}>Cambiar contraseña</Text>
           </TouchableOpacity>
-          {!formIsReady ? (
-            <Text style={styles.errorTextStyle}>{errorText}</Text>
-          ) : null}
+          <Text style={styles.errorTextStyle}>{errorText}</Text>
         </ScrollView>
       </View>
     </SafeAreaView>

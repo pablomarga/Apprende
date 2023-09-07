@@ -1,8 +1,7 @@
-import React, { useState, useEffect } from "react"
+import React, { useState, useCallback } from "react"
 import {
   View,
   TextInput,
-  Dimensions,
   Text,
   Platform,
   KeyboardAvoidingView,
@@ -13,20 +12,23 @@ import {
 import { db } from "../../../firebase"
 import { SafeAreaView } from "react-native-safe-area-context"
 import CustomModal from "../CustomModal"
+import { useFocusEffect } from "@react-navigation/native"
 
 const TeacherRegistration = () => {
   const [email, setEmail] = useState("")
   const [teacherAdded, setTeacherAdded] = useState(false)
   const [formIsReady, setFormIsReady] = useState(false)
   const [errorMessage, setErrorMessage] = useState("")
-
-  useEffect(() => {
-    if (email) {
-      setFormIsReady(true)
-    } else {
-      setFormIsReady(false)
-    }
-  }, [email])
+  useFocusEffect(
+    useCallback(() => {
+      setErrorMessage("")
+      if (email) {
+        setFormIsReady(true)
+      } else {
+        setFormIsReady(false)
+      }
+    }, [email])
+  )
 
   const onReset = () => {
     setEmail("")
@@ -74,7 +76,7 @@ const TeacherRegistration = () => {
           {teacherAdded && (
             <CustomModal
               title={"Profesor añadido"}
-              message={`El usuario con email: ${email} ha sido correctamente actualizado.`}
+              message={`El usuario con email: ${email} ahora es un profesor.`}
               onReset={onReset}
             />
           )}
@@ -99,9 +101,8 @@ const TeacherRegistration = () => {
           >
             <Text style={styles.buttonText}>Añadir profesor</Text>
           </TouchableOpacity>
-          {!formIsReady ? (
-            <Text style={styles.errorTextStyle}>{errorMessage}</Text>
-          ) : null}
+
+          <Text style={styles.errorTextStyle}>{errorMessage}</Text>
         </ScrollView>
       </KeyboardAvoidingView>
     </SafeAreaView>
